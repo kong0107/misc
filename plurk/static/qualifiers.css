@@ -169,6 +169,10 @@
     border-bottom: 1px solid #003600;
 }
 
+.q_whispers {
+    background-color: #32007E;
+}
+
 .qual_embedded {
     background: none;
     color: black;
