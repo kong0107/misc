@@ -6,10 +6,12 @@ Dir.new("pages").each do
         $str = handle.read
     end
     while pos = $str.index("plurk private") do
+		$plurk_file = $str.slice(pos + 23, 6) + ".html"
         begin
-            File.delete "plurks/" + $str.slice(pos + 23, 6) + ".html"
+            File.delete "plurks/" + $plurk_file
+			puts $plurk_file + " deleted."
         rescue
-            puts "File " + $str.slice(pos + 23, 6) + ".html doesn't exist."
+            puts "File " + $plurk_file + " doesn't exist."
         end
         $str[Range.new(pos - 12, $str.index("private plurk") + 30)] = ""
     end

@@ -12,3 +12,15 @@ function showGBLogin() {
 		GB_showCenter(_('Plurk sign in'), '/Users/showLogin?overlay=1', 400, 700);
 	return false;
 };
+
+
+var PlurkGB = {
+    showAtCenter: function(title, url, width, height) {
+        if (!window.GB_showCenter || (window.jQuery && (jQuery(window).width() < width || jQuery(document).height() < height))){
+            window.open(url)
+            return false;
+        }
+        GB_showCenter(title, url, height, width);
+        return false;
+    }
+};
