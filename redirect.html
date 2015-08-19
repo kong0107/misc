@@ -1,0 +1,68 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>轉址</title>
+		<style type="text/css">
+			#confirm {
+				border-bottom: 1px solid #000;
+				padding-bottom: 2em;
+			}
+		</style>
+		<script type="text/javascript">
+			window.onload = (function(){
+				var orig = window.onload || function(){};
+				return function() {
+					var hasUrl = false;
+					var s = document.location.search;
+					if(typeof s == 'string' && s.length > 1) {
+						var pairs = s.substr(1).split('&');
+						for(var i = 0; i < pairs.length; ++i) {
+							var pair = pairs[i].split('=');
+							if(pair[0].length == 0) continue;
+							var p = pair[0];
+							var v = pair[1];
+							switch(p) {
+								case 'url':
+									if(v.length < 10) break;
+									hasUrl = true;
+									var url = unescape(v);
+									var a = document.getElementById('url');
+									a.href = url;
+									a.textContent = url;
+									document.getElementById('confirm').onsubmit = function() {
+										document.location.href = url;
+										return false;
+									};
+									document.getElementById('input').style.display = 'none';
+									break;
+								default:
+									console.log('Unknown parameter `' + p + '` is listed as ' + v);
+							}
+						}
+					}
+					if(!hasUrl) document.getElementById('confirm').style.display = 'none';
+					return orig.apply(this, arguments);
+				};
+			})();
+		</script>
+	</head>
+	<body>
+		<form id="confirm">
+			目標網址 <a id="url"></a> 被認定包含不適合未滿十八歲者觀賞的內容，確定要前往？
+			<br>
+			The destination URL has been warned restricted. Are you sure to go forward?
+			<br>
+			<input type="submit" value="前往 (Go Forward)">
+		</form>
+		<form id="input" method="get" action="redirect.html">
+			<h1>自製帶有十八禁警告的轉址網頁</h1>
+			<dl>
+				<dt>輸入網址</dt>
+				<dd><input type="text" name="url" size="64"></dd>
+				<dt>按下送出後，複製頁面網址</dt>
+				<dd><input type="submit" value="Submit"></dd>
+			</dl>
+		</form>
+	</body>
+</html>
