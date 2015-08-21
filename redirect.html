@@ -2,10 +2,20 @@
 <html lang="zh-TW">
 	<head>
 		<meta charset="UTF-8">
+		<meta name="author" content="kong0107">
 		<title>轉址 (Redirect)</title>
 		<style type="text/css">
 			dd {
 				margin-bottom: 1.5em;
+			}
+			dt {
+				border-top: 1px solid #ccc;
+				padding: 0.2em;
+			}
+			ul {
+				margin: 0;
+				padding: 0;
+				list-style-type: none;
 			}
 			body {
 				line-height: 150%;
@@ -63,6 +73,15 @@
 									wm_zh += wms[p].zh;
 									wm_en += ' ' + wms[p].en;
 									break;
+								case 'warning':
+									v = decodeURI(v.trim());
+									if(!v) break;
+									if(wm_zh.length) {
+										wm_zh += '、';
+										wm_en += ' and other inappropriate stuff';
+									}
+									wm_zh += v;
+									break;
 								default:
 									console.log('Unknown parameter `' + p + '` is listed as ' + v);
 							}
@@ -74,7 +93,15 @@
 							document.getElementById('warning-en').textContent = wm_en;
 						}
 					}
-					else document.getElementById('confirm').style.display = 'none';
+					else {
+						document.getElementById('confirm').style.display = 'none';
+						document.getElementById('input').onsubmit = function() {
+							if(this.url.value.length < 10) {
+								alert('網址太短 (The URL is too short.)');
+								return false;
+							}
+						}
+					}
 					return orig.apply(this, arguments);
 				};
 			})();
@@ -84,7 +111,7 @@
 		<form id="confirm">
 			目標網址 <a id="url"></a> 被認定包含<span id="warning-zh">不適宜所有人觀賞</span>的內容，確定要前往？
 			<br>
-			The destination URL has been warned <span id="warning-en">restricted to adults only</span>. Are you sure to go forward?
+			The destination URL has been warned <span id="warning-en">not appropriate for everyone</span>. Are you sure to go forward?
 			<br>
 			<input type="submit" value="前往 (Go Forward)">
 			<hr>
@@ -113,6 +140,7 @@
 						<li><input type="checkbox" name="obscenity" checked="checked">色情猥褻 (sex and/or obscenity)</li>
 						<li><input type="checkbox" name="blood">暴力血腥 (violence and/or blood)</li>
 						<li><input type="checkbox" name="trypo">密集孔洞 (clustered holes)</li>
+						<li>其他：<input type="text" name="warning"></li>
 					</ul>
 				</dd>
 				<dt>
@@ -124,10 +152,9 @@
 			</dl>
 		</form>
 		<footer>
-			免責聲明：本網站與作者，對於您將被引導前往的網頁，不負任何責任，亦不做任何保證。目標網頁亦可能其實並非限制級網站。
+			免責聲明：本網站與作者，對於您將被引導前往的網頁，不負任何責任，亦不做任何保證。
 			<br>
 			Disclaimer: The author of this site/page is NOT responsible for what is in the target webpage.
-			<address>Author: <a href="http://facebook.com/kong.sex">Kong</a></address>
 		</footer>
 	</body>
 </html>
