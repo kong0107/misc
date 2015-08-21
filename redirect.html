@@ -4,27 +4,34 @@
 		<meta charset="UTF-8">
 		<title>轉址 (Redirect)</title>
 		<style type="text/css">
-			#confirm {
-				border-bottom: 1px solid #000;
-				padding-bottom: 2em;
-			}
 			dd {
-				margin-bottom: 1em;
+				margin-bottom: 1.5em;
+			}
+			body {
+				line-height: 150%;
 			}
 			body > footer {
 				position: fixed;
 				bottom: 0;
 				padding: 0.2em;
+				background-color: #ccc;
 			}
 		</style>
 		<script type="text/javascript">
 			window.onload = (function(){
 				var orig = window.onload || function(){};
+				var wms = {
+					obscenity : {zh: '色情猥褻', en: 'sex and/or obscenity'},
+					blood     : {zh: '暴力血腥', en: 'violence and/or blood'},
+					trypo     : {zh: '密集孔洞', en: 'clustered holes'}
+				};
 				return function() {
 					var hasUrl = false;
 					var s = document.location.search;
 					if(typeof s == 'string' && s.length > 1) {
 						var pairs = s.substr(1).split('&');
+						var wm_zh = '';
+						var wm_en = '';
 						for(var i = 0; i < pairs.length; ++i) {
 							var pair = pairs[i].split('=');
 							if(pair[0].length == 0) continue;
@@ -44,12 +51,30 @@
 									};
 									document.getElementById('input').style.display = 'none';
 									break;
+								case 'obscenity':
+								case 'blood':
+								case 'trypo':
+									if(!v) break;
+									if(wm_zh.length) {
+										wm_zh += '、';
+										wm_en += ' and';
+									}
+									else wm_en = 'containing';
+									wm_zh += wms[p].zh;
+									wm_en += ' ' + wms[p].en;
+									break;
 								default:
 									console.log('Unknown parameter `' + p + '` is listed as ' + v);
 							}
 						}
 					}
-					if(!hasUrl) document.getElementById('confirm').style.display = 'none';
+					if(hasUrl) {
+						if(wm_zh.length) {
+							document.getElementById('warning-zh').textContent = wm_zh;
+							document.getElementById('warning-en').textContent = wm_en;
+						}
+					}
+					else document.getElementById('confirm').style.display = 'none';
 					return orig.apply(this, arguments);
 				};
 			})();
@@ -57,15 +82,17 @@
 	</head>
 	<body>
 		<form id="confirm">
-			目標網址 <a id="url"></a> 被認定包含不適合未滿十八歲者觀賞的內容，確定要前往？
+			目標網址 <a id="url"></a> 被認定包含<span id="warning-zh">不適宜所有人觀賞</span>的內容，確定要前往？
 			<br>
-			The destination URL has been warned restricted to adults only. Are you sure to go forward?
+			The destination URL has been warned <span id="warning-en">restricted to adults only</span>. Are you sure to go forward?
 			<br>
 			<input type="submit" value="前往 (Go Forward)">
+			<hr>
+			<a id="create" href="redirect.html">建立警告頁 (Create a warning page)</a>
 		</form>
 		<form id="input">
 			<h1>
-				自製帶有十八禁警告的轉址網頁
+				自製帶有警告的轉址網頁
 				<br>
 				Make your own warning page to target webpage
 			</h1>
@@ -77,6 +104,18 @@
 				</dt>
 				<dd><input type="text" name="url" size="64"></dd>
 				<dt>
+					選擇警告類型
+					<br>
+					Select warning type
+				</dt>
+				<dd>
+					<ul>
+						<li><input type="checkbox" name="obscenity" checked="checked">色情猥褻 (sex and/or obscenity)</li>
+						<li><input type="checkbox" name="blood">暴力血腥 (violence and/or blood)</li>
+						<li><input type="checkbox" name="trypo">密集孔洞 (clustered holes)</li>
+					</ul>
+				</dd>
+				<dt>
 					按下送出後，複製頁面網址
 					<br>
 					Submit and copy the link in the address bar.
@@ -85,6 +124,9 @@
 			</dl>
 		</form>
 		<footer>
+			免責聲明：本網站與作者，對於您將被引導前往的網頁，不負任何責任，亦不做任何保證。目標網頁亦可能其實並非限制級網站。
+			<br>
+			Disclaimer: The author of this site/page is NOT responsible for what is in the target webpage.
 			<address>Author: <a href="http://facebook.com/kong.sex">Kong</a></address>
 		</footer>
 	</body>
