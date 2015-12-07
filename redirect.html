@@ -28,18 +28,11 @@
 			}
 		</style>
 		<script type="text/javascript">
-			(function(i,s,o,g,r,a,m){
-				i['GoogleAnalyticsObject'] = r;
-				i[r] = i[r] || function(){
-					(i[r].q = i[r].q || []).push(arguments);
-				}, i[r].l = 1 * new Date();
-				a = s.createElement(o), m = s.getElementsByTagName(o)[0];
-				a.async = 1;
-				a.src = g;
-				m.parentNode.insertBefore(a,m);
-			})(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
-			ga('create', 'UA-1747270-19', 'auto');
-			ga('send', 'pageview');
+			function str_rot13(str) {
+				return str.replace(/[a-z]/gi, function(c) {
+					return String.fromCharCode(c.charCodeAt(0) + (c.toLowerCase() < 'n' ? 13 : -13));
+				});
+			}
 
 			window.onload = (function(){
 				var orig = window.onload || function(){};
@@ -51,6 +44,8 @@
 				return function(){
 					var hasUrl = false;
 					var s = document.location.search;
+					var url = '';
+					var parse_str_rot13 = false;
 					if(typeof s == 'string' && s.length > 1){
 						var pairs = s.substr(1).split('&');
 						var wm_zh = '';
@@ -64,15 +59,10 @@
 								case 'url':
 									if(v.length < 10) break;
 									hasUrl = true;
-									var url = unescape(v);
-									var a = document.getElementById('url');
-									a.href = url;
-									a.textContent = url;
-									document.getElementById('confirm').onsubmit = function(){
-										document.location.href = url;
-										return false;
-									};
-									document.getElementById('input').style.display = 'none';
+									url = unescape(v);
+									break;
+								case 'encode':
+									parse_str_rot13 = true;
 									break;
 								case 'obscenity':
 								case 'blood':
@@ -100,10 +90,22 @@
 							}
 						}
 					}
+					console.log(url);
 					if(hasUrl){
 						if(wm_zh.length){
 							document.getElementById('warning-zh').textContent = wm_zh;
 							document.getElementById('warning-en').textContent = wm_en;
+
+							if(parse_str_rot13) url = str_rot13(url);
+							var a = document.getElementById('url');
+							a.href = url;
+							a.textContent = url;
+							console.log(a);
+							document.getElementById('confirm').onsubmit = function(){
+								document.location.href = url;
+								return false;
+							};
+							document.getElementById('input').style.display = 'none';
 						}
 					}
 					else {
@@ -113,8 +115,24 @@
 								alert('網址太短 (The URL is too short.)');
 								return false;
 							}
+							if(this.encode)
+								this.url.value = str_rot13(this.url.value);
 						}
 					}
+
+					(function(i,s,o,g,r,a,m){
+						i['GoogleAnalyticsObject'] = r;
+						i[r] = i[r] || function(){
+							(i[r].q = i[r].q || []).push(arguments);
+						}, i[r].l = 1 * new Date();
+						a = s.createElement(o), m = s.getElementsByTagName(o)[0];
+						a.async = 1;
+						a.src = g;
+						m.parentNode.insertBefore(a,m);
+					})(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
+					ga('create', 'UA-1747270-19', 'auto');
+					ga('send', 'pageview');
+
 					return orig.apply(this, arguments);
 				};
 			})();
@@ -154,6 +172,21 @@
 						<li><input type="checkbox" name="blood">暴力血腥 (violence and/or blood)</li>
 						<li><input type="checkbox" name="trypo">密集孔洞 (clustered holes)</li>
 						<li>其他：<input type="text" name="warning"></li>
+					</ul>
+				</dd>
+				<dt>其他選項<br>Other Choices</dt>
+				<dd>
+					<ul style="display: table;">
+						<li>
+							<label style="display: table-row;">
+								<input type="checkbox" name="encode" value="str_rot13" style="display: table-cell;">
+								<p style="display: table-cell;">
+									將網址編碼（以避開某些網站的過濾機制）
+									<br>
+									Encode the URL (to prevent from being banned)
+								</p>
+							</label>
+						</li>
 					</ul>
 				</dd>
 				<dt>
