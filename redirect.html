@@ -1,216 +1,200 @@
 <!DOCTYPE HTML>
 <html lang="zh-TW">
-	<head>
-		<meta charset="UTF-8">
-		<meta name="author" content="kong0107">
-		<title>轉址 (Redirect)</title>
-		<style type="text/css">
-			dd {
-				margin-bottom: 1.5em;
-			}
-			dt {
-				border-top: 1px solid #ccc;
-				padding: 0.2em;
-			}
-			ul {
-				margin: 0;
-				padding: 0;
-				list-style-type: none;
-			}
-			body {
-				line-height: 150%;
-			}
-			#input {
-				padding-bottom: 4em;
-			}
-			body > footer {
-				position: fixed;
-				bottom: 0;
-				padding: 0.2em;
-				background-color: #ccc;
-			}
-		</style>
-		<script type="text/javascript">
-			function str_rot13(str) {
-				return str.replace(/[a-z]/gi, function(c) {
-					return String.fromCharCode(c.charCodeAt(0) + (c.toLowerCase() < 'n' ? 13 : -13));
-				});
-			}
+<head>
+<meta charset="UTF-8">
+<meta name="author" content="kong0107">
+<title>轉址 (Redirect)</title>
+<style type="text/css">
+dd {
+	margin-bottom: 1.5em;
+}
+dt {
+	border-top: 1px solid #ccc;
+	padding: 0.2em;
+}
+ul {
+	margin: 0;
+	padding: 0;
+	list-style-type: none;
+}
+body {
+	line-height: 150%;
+}
+#input {
+	padding-bottom: 4em;
+}
+body > footer {
+	position: fixed;
+	bottom: 0;
+	padding: 0.2em;
+	background-color: #ccc;
+}
+</style>
+<script type="text/javascript">
+function str_rot13(str) {
+	return str.replace(/[a-z]/gi, function(c) {
+		return String.fromCharCode(c.charCodeAt(0) + (c.toLowerCase() < 'n' ? 13 : -13));
+	});
+}
 
-			window.onload = (function(){
-				var orig = window.onload || function(){};
-				var wms = {
-					obscenity : {zh: '色情猥褻', en: 'sex and/or obscenity'},
-					blood     : {zh: '暴力血腥', en: 'violence and/or blood'},
-					trypo     : {zh: '密集孔洞', en: 'clustered holes'},
-					restricted: {zh: '不適合未達法定年齡者瀏覽', en: 'disallowed for those below legal age'}
-				};
-				var hasUrl = false;
-				var s = document.location.search;
-				var url = '';
-				var parse_str_rot13 = false;
-				return function(){
-					if(typeof s == 'string' && s.length > 1){
-						var pairs = s.substr(1).split('&');
-						var wm_zh = '';
-						var wm_en = '';
-						for(var i = 0; i < pairs.length; ++i){
-							var pair = pairs[i].split('=');
-							if(pair[0].length == 0) continue;
-							var p = pair[0];
-							var v = pair[1];
-							if(!v) continue;
-							switch(p){
-								case 'url':
-									if(v.length < 10) break;
-									hasUrl = true;
-									url = unescape(v);
-									break;
-								case 'encode':
-									parse_str_rot13 = true;
-									break;
-								case 'obscenity':
-								case 'blood':
-								case 'trypo':
-								case 'restricted':
-									if(wm_zh.length){
-										wm_zh += '、';
-										wm_en += ' and';
-									}
-									else wm_en = 'containing';
-									wm_zh += wms[p].zh;
-									wm_en += ' ' + wms[p].en;
-									break;
-								case 'warning':
-									v = decodeURI(v.trim());
-									if(wm_zh.length){
-										wm_zh += '、';
-										wm_en += ' and other inappropriate stuff';
-									}
-									wm_zh += v;
-									break;
-								default:
-									console.log('Unknown parameter `' + p + '` is listed as ' + v);
-							}
-						}
-					}
-					if(hasUrl){
+window.onload = (function(){
+	var orig = window.onload || function(){};
+	var wms = {
+		obscenity : {zh: '色情猥褻', en: 'sex and/or obscenity'},
+		blood     : {zh: '暴力血腥', en: 'violence and/or blood'},
+		trypo     : {zh: '密集孔洞', en: 'clustered holes'},
+		restricted: {zh: '不適合未達法定年齡者瀏覽', en: 'disallowed for those below legal age'}
+	};
+	var hasUrl = false;
+	var s = document.location.search;
+	var url = '';
+	var parse_str_rot13 = false;
+	return function(){
+		if(typeof s == 'string' && s.length > 1){
+			var pairs = s.substr(1).split('&');
+			var wm_zh = '';
+			var wm_en = '';
+			for(var i = 0; i < pairs.length; ++i){
+				var pair = pairs[i].split('=');
+				if(pair[0].length == 0) continue;
+				var p = pair[0];
+				var v = pair[1];
+				if(!v) continue;
+				switch(p){
+					case 'url':
+						if(v.length < 10) break;
+						hasUrl = true;
+						url = unescape(v);
+						break;
+					case 'encode':
+						parse_str_rot13 = true;
+						break;
+					case 'obscenity':
+					case 'blood':
+					case 'trypo':
+					case 'restricted':
 						if(wm_zh.length){
-							document.getElementById('warning-zh').textContent = wm_zh;
-							document.getElementById('warning-en').textContent = wm_en;
-
-							if(parse_str_rot13) url = str_rot13(url);
-							var a = document.getElementById('url');
-							a.href = url;
-							a.textContent = url;
-							document.getElementById('confirm').onsubmit = function(){
-								document.location.href = url;
-								return false;
-							};
-							document.getElementById('input').style.display = 'none';
+							wm_zh += '、';
+							wm_en += ' and';
 						}
-					}
-					else {
-						document.getElementById('confirm').style.display = 'none';
-						document.getElementById('input').onsubmit = function(){
-							if(this.url.value.length < 10){
-								alert('網址太短 (The URL is too short.)');
-								return false;
-							}
-							if(this.encode.checked)
-								this.url.value = str_rot13(this.url.value);
+						else wm_en = 'containing';
+						wm_zh += wms[p].zh;
+						wm_en += ' ' + wms[p].en;
+						break;
+					case 'warning':
+						v = decodeURI(v.trim());
+						if(wm_zh.length){
+							wm_zh += '、';
+							wm_en += ' and other inappropriate stuff';
 						}
-					}
+						wm_zh += v;
+						break;
+					default:
+						console.log('Unknown parameter `' + p + '` is listed as ' + v);
+				}
+			}
+		}
+		if(hasUrl){
+			if(wm_zh.length){
+				document.getElementById('warning-zh').textContent = wm_zh;
+				document.getElementById('warning-en').textContent = wm_en;
 
-					/**
-					 * Google Analytics
-					 *
-					 * Only need to work if not browsed locally.
-					 */
-					if(!/^file/.test(document.location.protocol)) {
-					(function(i,s,o,g,r,a,m){
-						i['GoogleAnalyticsObject'] = r;
-						i[r] = i[r] || function(){
-							(i[r].q = i[r].q || []).push(arguments);
-						}, i[r].l = 1 * new Date();
-						a = s.createElement(o), m = s.getElementsByTagName(o)[0];
-						a.async = 1;
-						a.src = g;
-						m.parentNode.insertBefore(a,m);
-					})(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
-					ga('create', 'UA-1747270-19', 'auto');
-					ga('send', 'pageview');
-					}
-
-					return orig.apply(this, arguments);
+				if(parse_str_rot13) url = str_rot13(url);
+				var a = document.getElementById('url');
+				a.href = url;
+				a.textContent = url;
+				document.getElementById('confirm').onsubmit = function(){
+					document.location.href = url;
+					return false;
 				};
-			})();
-		</script>
-	</head>
-	<body>
-		<form id="confirm">
-			目標網址 <a id="url"></a> 被認定包含<span id="warning-zh">不適宜所有人觀賞</span>的內容，確定要前往？
-			<br>
-			The destination URL has been warned <span id="warning-en">not appropriate for everyone</span>. Are you sure to go forward?
-			<br>
-			<input type="submit" value="前往 (Go Forward)">
-			<hr>
-			<a id="create" href="redirect.html">建立警告頁 (Create a warning page)</a>
-		</form>
-		<form id="input">
-			<h1>
-				自製帶有警告的轉址網頁
-				<br>
-				Make your own warning page to target webpage
-			</h1>
-			<dl>
-				<dt>
-					輸入網址
-					<br>
-					Enter the URL
-				</dt>
-				<dd><input type="text" name="url" size="64"></dd>
-				<dt>
-					選擇警告類型
-					<br>
-					Select warning type
-				</dt>
-				<dd>
-					<ul>
-						<li><label><input type="checkbox" name="obscenity" checked="checked">色情猥褻 (sex and/or obscenity)</label></li>
-						<li><label><input type="checkbox" name="blood">暴力血腥 (violence and/or blood)</label></li>
-						<li><label><input type="checkbox" name="trypo">密集孔洞 (clustered holes)</label></li>
-						<li><label><input type="checkbox" name="restricted" checked="checked">未達法定年齡者不得瀏覽 (disallowed for those below legal age)</label></li>
-						<li><label>其他：<input type="text" name="warning"></label></li>
-					</ul>
-				</dd>
-				<dt>其他選項<br>Other Choices</dt>
-				<dd>
-					<ul style="display: table;">
-						<li style="display: table-row-group;">
-							<label style="display: table-row;">
-								<input type="checkbox" name="encode" value="str_rot13" style="display: table-cell;">
-								<p style="display: table-cell;">
-									將網址編碼（以避開某些網站的過濾機制）
-									<br>
-									Encode the URL (to prevent from being banned)
-								</p>
-							</label>
-						</li>
-					</ul>
-				</dd>
-				<dt>
-					按下送出後，複製頁面網址
-					<br>
-					Submit and copy the link in the address bar.
-				</dt>
-				<dd><input type="submit" value="送出 (Submit)"></dd>
-			</dl>
-		</form>
-		<footer>
-			免責聲明：本網站與作者，對於您將被引導前往的網頁，不負任何責任，亦不做任何保證。
-			<br>
-			Disclaimer: The author of this site/page is NOT responsible for what is in the target webpage.
-		</footer>
-	</body>
+				document.getElementById('input').style.display = 'none';
+			}
+		}
+		else {
+			document.getElementById('confirm').style.display = 'none';
+			document.getElementById('input').onsubmit = function(){
+				if(this.url.value.length < 10){
+					alert('網址太短 (The URL is too short.)');
+					return false;
+				}
+				if(this.encode.checked)
+					this.url.value = str_rot13(this.url.value);
+			}
+		}
+
+		/**
+		 * Google Analytics
+		 *
+		 * Only need to work if not browsed locally.
+		 */
+		if(!/^file/.test(document.location.protocol)) {
+			(function(i,s,o,g,r,a,m){
+				i['GoogleAnalyticsObject'] = r;
+				i[r] = i[r] || function(){
+					(i[r].q = i[r].q || []).push(arguments);
+				}, i[r].l = 1 * new Date();
+				a = s.createElement(o), m = s.getElementsByTagName(o)[0];
+				a.async = 1;
+				a.src = g;
+				m.parentNode.insertBefore(a,m);
+			})(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
+			ga('create', 'UA-1747270-19', 'auto');
+			ga('send', 'pageview');
+		}
+
+		return orig.apply(this, arguments);
+	};
+})();
+</script>
+</head>
+<body>
+<form id="confirm">
+	目標網址 <a id="url"></a> 被認定包含<span id="warning-zh">不適宜所有人觀賞</span>的內容，確定要前往？
+	<br>
+	The destination URL has been warned <span id="warning-en">not appropriate for everyone</span>. Are you sure to go forward?
+	<br>
+	<input type="submit" value="前往 (Go Forward)">
+	<hr>
+	<a id="create" href="redirect.html">建立警告頁 (Create a warning page)</a>
+</form>
+<form id="input">
+	<h1>自製帶有警告的轉址網頁<br>Make your own warning page to target webpage</h1>
+	<dl>
+		<dt>輸入網址<br>Enter the URL</dt>
+		<dd><input type="text" name="url" size="64"></dd>
+		<dt>選擇警告類型<br>Select warning type</dt>
+		<dd>
+			<ul>
+				<li><label><input type="checkbox" name="obscenity" checked="checked">色情猥褻 (sex and/or obscenity)</label></li>
+				<li><label><input type="checkbox" name="blood">暴力血腥 (violence and/or blood)</label></li>
+				<li><label><input type="checkbox" name="trypo">密集孔洞 (clustered holes)</label></li>
+				<li><label><input type="checkbox" name="restricted" checked="checked">未達法定年齡者不得瀏覽 (disallowed for those below legal age)</label></li>
+				<li><label>其他：<input type="text" name="warning"></label></li>
+			</ul>
+		</dd>
+		<dt>其他選項<br>Other Choices</dt>
+		<dd>
+			<ul style="display: table;">
+				<li style="display: table-row-group;">
+					<label style="display: table-row;">
+						<input type="checkbox" name="encode" value="str_rot13" style="display: table-cell;">
+						<p style="display: table-cell;">
+							將網址編碼（以避開某些網站的過濾機制）
+							<br>
+							Encode the URL (to prevent from being banned)
+						</p>
+					</label>
+				</li>
+			</ul>
+		</dd>
+		<dt>按下送出後，複製頁面網址<br>Submit and copy the link in the address bar.</dt>
+		<dd><input type="submit" value="送出 (Submit)"></dd>
+	</dl>
+</form>
+<footer>
+	免責聲明：本網站與作者，對於您將被引導前往的網頁，不負任何責任，亦不做任何保證。
+	<br>
+	Disclaimer: The author of this site/page is NOT responsible for what is in the target webpage.
+</footer>
+</body>
 </html>
