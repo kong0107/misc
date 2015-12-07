@@ -20,6 +20,9 @@
 			body {
 				line-height: 150%;
 			}
+			#input {
+				padding-bottom: 4em;
+			}
 			body > footer {
 				position: fixed;
 				bottom: 0;
@@ -39,13 +42,14 @@
 				var wms = {
 					obscenity : {zh: '色情猥褻', en: 'sex and/or obscenity'},
 					blood     : {zh: '暴力血腥', en: 'violence and/or blood'},
-					trypo     : {zh: '密集孔洞', en: 'clustered holes'}
+					trypo     : {zh: '密集孔洞', en: 'clustered holes'},
+					restricted: {zh: '不適合未達法定年齡者瀏覽', en: 'disallowed for those below legal age'}
 				};
+				var hasUrl = false;
+				var s = document.location.search;
+				var url = '';
+				var parse_str_rot13 = false;
 				return function(){
-					var hasUrl = false;
-					var s = document.location.search;
-					var url = '';
-					var parse_str_rot13 = false;
 					if(typeof s == 'string' && s.length > 1){
 						var pairs = s.substr(1).split('&');
 						var wm_zh = '';
@@ -68,7 +72,7 @@
 								case 'obscenity':
 								case 'blood':
 								case 'trypo':
-									if(!v) break;
+								case 'restricted':
 									if(wm_zh.length){
 										wm_zh += '、';
 										wm_en += ' and';
@@ -79,7 +83,6 @@
 									break;
 								case 'warning':
 									v = decodeURI(v.trim());
-									if(!v) break;
 									if(wm_zh.length){
 										wm_zh += '、';
 										wm_en += ' and other inappropriate stuff';
@@ -91,7 +94,6 @@
 							}
 						}
 					}
-					console.log(url);
 					if(hasUrl){
 						if(wm_zh.length){
 							document.getElementById('warning-zh').textContent = wm_zh;
@@ -101,7 +103,6 @@
 							var a = document.getElementById('url');
 							a.href = url;
 							a.textContent = url;
-							console.log(a);
 							document.getElementById('confirm').onsubmit = function(){
 								document.location.href = url;
 								return false;
@@ -116,11 +117,17 @@
 								alert('網址太短 (The URL is too short.)');
 								return false;
 							}
-							if(this.encode)
+							if(this.encode.checked)
 								this.url.value = str_rot13(this.url.value);
 						}
 					}
 
+					/**
+					 * Google Analytics
+					 *
+					 * Only need to work if not browsed locally.
+					 */
+					if(!/^file/.test(document.location.protocol)) {
 					(function(i,s,o,g,r,a,m){
 						i['GoogleAnalyticsObject'] = r;
 						i[r] = i[r] || function(){
@@ -133,6 +140,7 @@
 					})(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
 					ga('create', 'UA-1747270-19', 'auto');
 					ga('send', 'pageview');
+					}
 
 					return orig.apply(this, arguments);
 				};
@@ -169,16 +177,17 @@
 				</dt>
 				<dd>
 					<ul>
-						<li><input type="checkbox" name="obscenity" checked="checked">色情猥褻 (sex and/or obscenity)</li>
-						<li><input type="checkbox" name="blood">暴力血腥 (violence and/or blood)</li>
-						<li><input type="checkbox" name="trypo">密集孔洞 (clustered holes)</li>
-						<li>其他：<input type="text" name="warning"></li>
+						<li><label><input type="checkbox" name="obscenity" checked="checked">色情猥褻 (sex and/or obscenity)</label></li>
+						<li><label><input type="checkbox" name="blood">暴力血腥 (violence and/or blood)</label></li>
+						<li><label><input type="checkbox" name="trypo">密集孔洞 (clustered holes)</label></li>
+						<li><label><input type="checkbox" name="restricted" checked="checked">未達法定年齡者不得瀏覽 (disallowed for those below legal age)</label></li>
+						<li><label>其他：<input type="text" name="warning"></label></li>
 					</ul>
 				</dd>
 				<dt>其他選項<br>Other Choices</dt>
 				<dd>
 					<ul style="display: table;">
-						<li>
+						<li style="display: table-row-group;">
 							<label style="display: table-row;">
 								<input type="checkbox" name="encode" value="str_rot13" style="display: table-cell;">
 								<p style="display: table-cell;">
