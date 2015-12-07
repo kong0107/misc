@@ -55,6 +55,7 @@
 							if(pair[0].length == 0) continue;
 							var p = pair[0];
 							var v = pair[1];
+							if(!v) continue;
 							switch(p){
 								case 'url':
 									if(v.length < 10) break;
