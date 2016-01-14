@@ -64,7 +64,10 @@ window.onload = (function(){
 					case 'url':
 						if(v.length < 10) break;
 						hasUrl = true;
-						url = unescape(v);
+						/// 網址含有非 ASCII 字元時，遇到如 Facebook 的轉址連結，還原時會變亂碼，故不宜一概用 unescape 。
+						url = v.replace(/%[\dA-F]{2}/g, function(str){
+							return (parseInt(str.substr(1,2), 16) > 0x7f) ? str : unescape(str);
+						});
 						break;
 					case 'encode':
 						parse_str_rot13 = true;
@@ -149,9 +152,11 @@ window.onload = (function(){
 </head>
 <body>
 <form id="confirm">
-	目標網址 <a id="url"></a> 被認定包含<span id="warning-zh">不適宜所有人觀賞</span>的內容，確定要前往？
+	下述目標網址被認定包含<span id="warning-zh">不適宜所有人觀賞</span>的內容，確定要前往？
 	<br>
-	The destination URL has been warned <span id="warning-en">not appropriate for everyone</span>. Are you sure to go forward?
+	The destination URL below has been warned <span id="warning-en">not appropriate for everyone</span>. Are you sure to go forward?
+	<br>
+	<a id="url"></a>
 	<br>
 	<input type="submit" value="前往 (Go Forward)">
 	<hr>
