@@ -1,0 +1,37 @@
+<!DOCTYPE HTML>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="author" content="kong0107">
+<title>心算練習</title>
+<style type="text/css"></style>
+<script type="text/javascript">
+	window.addEventListener("load", function() {
+		var $ = function(id) {return document.getElementById(id);};
+		var rand = function() {return Math.floor(Math.random() * 98) + 2;};
+		var multiplicand = rand();
+		var multiplier = rand();
+		$("multiplicand").textContent = multiplicand.toString();
+		$("multiplier").textContent = multiplier.toString();
+		$("product").style.display = "none";
+		$("product").textContent = (multiplicand * multiplier).toString();
+		
+		var timer = new Date;
+		$("answer").addEventListener("click", function() {
+			$("answer").style.display = "none";
+			$("product").style.display = "";
+			$("score").textContent = ((new Date).getTime() - timer.getTime()).toString() + " milliseconds passed.";
+		});
+	});
+</script>
+</head>
+<body>
+	<span id="multiplicand"></span>
+	&#x00d7;
+	<span id="multiplier"></span>
+	=
+	<span id="product"></span>
+	<button id="answer">?</button>
+	<div id="score"></div>
+</body>
+</html>
