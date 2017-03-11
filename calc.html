@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="author" content="kong0107">
-<title>心算練習</title>
+<title>Multiplication Practice</title>
 <style type="text/css"></style>
 <script type="text/javascript">
 	window.addEventListener("load", function() {
@@ -22,6 +22,10 @@
 			$("product").style.display = "";
 			$("score").textContent = ((new Date).getTime() - timer.getTime()).toString() + " milliseconds passed.";
 		});
+		
+		$("reloader").addEventListener("click", function() {
+			location.reload();
+		});
 	});
 </script>
 </head>
@@ -33,5 +37,6 @@
 	<span id="product"></span>
 	<button id="answer">?</button>
 	<div id="score"></div>
+	<button id="reloader">Reload</button>
 </body>
 </html>
