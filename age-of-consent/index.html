@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="zh-TW" ng-app="myApp">
+<head>
+    <meta charset="UTF-8">
+    <title>與兒少性交之刑事責任</title>
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular.min.js"></script>
+	<script>
+		angular.module("myApp", []).controller("main", function($scope, $http) {
+			/// 取得法條資料
+			$http.get("aoc_ag.json").success(function(r){
+				$scope.article_groups = r;
+
+				/// 將法條照條號排列，另存不分組的一維陣列。
+				var articles = [];
+				for(var i = 0; i < r.length; ++i) {
+					for(var j = 0; j < r[i].length; ++j) {
+						articles.push(r[i][j]);
+						r[i][j].index = r[i][j].id.split('_');
+					}
+				}
+
+				$scope.articles = articles.sort(function(a,b) {
+					var pi = function(numstr){ return parseInt("0" + numstr, 10); }
+					var a0 = a.index[0], b0 = b.index[0];
+					for(var i = 0; i < a0.length; ++i) {
+						if(i >= b0.length) return 1;
+						var d = a0.charCodeAt(i) - b0.charCodeAt(i);
+						if(d) return d;
+					}
+					if(a0.length < b0.length) return -1;
+					for(var i = 1; i < a.index.length; ++i) {
+						if(i >= b.index.length) return 1;
+						var d = pi(a.index[i]) - pi(b.index[i]);
+						if(d) return d;
+					}
+					return -1;
+				});
+			});
+
+			/// Default values for private members
+			var _older = 17;
+			var _younger = 15;
+			var _desire = true;
+			var _m = 0, _n = 0;
+			var days2text = function(num) {
+				var y = Math.floor(num / 360);
+				var m = Math.floor(num % 360 / 30);
+				var d = num % 30;
+				return (y ? (y + "年") : "") + (m ? (m + "月") : "") + (d ? (d + "日") : "");
+			};
+
+			/// Getters & setters
+			$scope.olderAge = function(newAge) {
+				var hasChanged = arguments.length && (newAge != _older);
+				if(hasChanged) {
+					if(newAge < 0) newAge = 0;
+					if(newAge < _younger) _younger = newAge;
+					_older = newAge;
+					$scope.eva();
+				}
+				return _older;
+			};
+			$scope.youngerAge = function(newAge) {
+				var hasChanged = arguments.length && (newAge != _younger);
+				if(hasChanged) {
+					if(newAge < 0) newAge = 0;
+					if(newAge > _older) _older = newAge;
+					_younger = newAge;
+					$scope.eva();
+				}
+				return _younger;
+			};
+			$scope.desire = function(newVal) {
+				var hasChanged = arguments.length && (newVal != _desire);
+				if(hasChanged) {
+					_desire = newVal;
+					$scope.eva();
+				}
+				return _desire;
+			};
+
+			/// Handy function
+			var addArticle = function() {
+				for(var i =0; i < arguments.length; ++i)
+					$scope.appliedArticles.push(arguments[i]);
+			};
+
+			/// main function
+			$scope.eva = function() {
+				/// Init
+				$scope.legalStatus = null;
+				$scope.appliedArticles = [];
+				$scope.onlyUponComplaint = false;
+				$scope.remittable = false;
+				$scope.maximum = 0;
+				$scope.minimum = 0;
+
+				/// Check error
+				if(_older < _younger) return;
+				
+				/// Update location.hash
+				location.hash = '#older=' + _older + '&younger=' + _younger + '&desire=' + _desire;
+
+				/// 順著分則條號列出條件式
+				if(!_desire) {
+					addArticle("cc_221__1");
+					_m = 3600; _n = 1080;
+
+					if(_younger < 14) {
+						$scope.appliedArticles = ["cc_222__1_2"];
+						_m = 5400; _n = 2520;
+					}
+					else if(_older >= 20 && _younger < 18) {
+						/// 就本頁面討論範圍內，兒少法§112 Ⅰ因其但書，
+						/// 僅適用於20歲以上對14歲以上、未滿18歲者犯§221的情形。
+						addArticle("pcywra_112__1");
+						_m *= 1.5; _n *= 1.5;
+					}
+				}
+				else if(_younger < 16) {
+					if(_younger < 7) {
+						addArticle("tps_99_7", "cc_222__1_2");
+						_m = 5400; _n = 2520;
+					}
+					else {
+						if(_younger < 14) {
+							addArticle("cc_227__1");
+							_m = 3600; _n = 1080;
+						}
+						else {
+							addArticle("cc_227__3");
+							_m = 2520; _n = 60;
+						}
+						if(_older < 18) {
+							addArticle("cc_227_1", "cc_229_1");
+							_m /= 3; _n /= 3;
+							$scope.onlyUponComplaint = true;
+							$scope.remittable = true;
+						}
+					}
+				}
+
+				/// 責任能力
+				if($scope.appliedArticles.length) {
+					$scope.legalStatus = "guilty";
+					if(_older < 14) {
+						$scope.legalStatus = "notPunishable";
+						addArticle("cc_18__1");
+					}
+					else if(_older < 18) {
+						addArticle("cc_18__2");
+						_m /= 2; _n /= 2;
+					}
+					else if(_older >= 80) {
+						addArticle("cc_18__3");
+						_m /= 2; _n /= 2;
+					}
+					$scope.maximum = days2text(_m);
+					$scope.minimum = days2text(_n);
+				}
+				else $scope.legalStatus = "lawful";
+			}
+
+			/// Display settings
+			$scope.appliedArticles = [];
+			$scope.classOfInapplicableArticles = "hide";
+			$scope.getClass = function(aid) {
+				var c = [];
+				if($scope.appliedArticles.indexOf(aid) == -1) c.push($scope.classOfInapplicableArticles);
+				if(aid == $scope.focusingArticle) c.push("mouseover");
+				c.push(aid);
+				return c;
+			};
+
+			/// Set inputs if `location.hash` assigned
+			if(location.hash) {
+				var pairs = location.hash.substr(1).split("&");
+				for(var i = 0; i < pairs.length; ++i) {
+					if(!pairs[i]) continue;
+					var pair = pairs[i].split("=");
+					if(pair.length == 1) continue;
+					var v = pair[1];
+					switch(pair[0]) {
+						case "older":	$scope.olderAge(parseInt(v)); break;
+						case "younger":	$scope.youngerAge(parseInt(v)); break;
+						case "desire":	$scope.desire(v == "true"); break;
+					}
+				}
+			}
+		});
+	</script>
+	<style>
+		p {
+			margin: 0;
+			line-height: 150%;
+		}
+		h1, h2, h3, h4, h5, h6 {
+			margin: 0.5em 0;
+		}
+		body > section {
+			padding: 0.2em;
+			margin: 0.2em;
+			line-height: 125%;
+			border-top: 2px solid #ccc;
+			clear: both;
+		}
+		dt {
+			float: left;
+			clear: both;
+		}
+		dd { margin: 0 0 0.5em 6em; }
+		details > p{ font-size: smaller; }
+		article > details {
+			font-size: smaller;
+			white-space: pre-line;
+		}
+		.translucent { opacity: 0.4; }
+		.hide { display: none; }
+		.mouseover { background-color: #ff0; }
+		nav ul {
+			list-style-type: none;
+			margin: 0 0 1em 0;
+			padding: 0;
+		}
+		nav li {
+			display: inline-block;
+			padding: 0 0.5em;
+			transition: all 0.5s;
+			border: 1px solid #bbb;
+			margin: 0.1em 0.5em;
+		}
+		article {
+			transition: all 1s;
+			margin-bottom: 1em;
+			float: left;
+			width: 30%;
+			height: 8em;
+			background-color: #def;
+			margin: 0.2em;
+			padding: 0.2em;
+			overflow: auto;
+		}
+		input[type=number] {
+			width: 4em;
+		}
+		td { text-align: center; }
+		table { margin-bottom: 2em; }
+		.hor { background-color: #bcd; }
+		.ver { background-color: #dcb; }
+		.clear { clear: both; }
+	</style>
+</head>
+<body ng-controller="main" ng-init="eva();">
+	<h1>與兒少性交之刑事責任</h1>
+	<section>
+		<h2>情境設定</h2>
+		<form ng-model-options="{getterSetter:true}">
+			<dl>
+				<dt>年長者歲數</dt>
+				<dd>
+					<input type="number" ng-model="olderAge">
+					<button ng-click="olderAge(olderAge()+1);">+</button>
+					<button ng-click="olderAge(olderAge()-1);">-</button>
+				</dd>
+				<dt>年幼者歲數</dt>
+				<dd>
+					<input type="number" ng-model="youngerAge">
+					<button ng-click="youngerAge(youngerAge()+1);">+</button>
+					<button ng-click="youngerAge(youngerAge()-1);">-</button>
+				</dd>
+				<dt>年幼者意願</dt>
+				<dd>
+					<label><input type="radio" ng-model="desire" ng-value="true">同意</label>
+					<wbr>
+					<label><input type="radio" ng-model="desire" ng-value="false">不同意</label>
+				</dd>
+			</dl>
+		</form>
+	</section>
+	<section>
+		<h2>刑事責任</h2>
+		<p ng-show="!legalStatus">若您看到這一行，表示程式沒有順利運作。</p>
+		<p ng-show="legalStatus=='lawful'">無罪。</p>
+		<p ng-show="legalStatus=='notPunishable'">不處刑罰、不會有前科，但因仍屬違法行為，對造可請求民事賠償，且仍須由少年法庭處置。（少年事件處理法§3①、§85-1）</p>
+		<section ng-show="legalStatus=='guilty'">
+			<p>有罪。</p>
+			<p>最高刑度：{{maximum}}</p>
+			<p>最低刑度：{{minimum}}</p>
+			<details ng-show="onlyUponComplaint">
+				<summary>告訴乃論</summary>
+				<p>須經被害人或其配偶或其法定代理人中任一人於知情後六個月內提出告訴，檢察官才可起訴、法官才可定罪。（刑事訴訟法§237）</p>
+				<p>若無人提出告訴，即不會有罪，也不會有前科。但行為人仍須進入少年保護程序。（少年事件處理法施行細則§10）</p>
+					<!--p>配偶、法定代理人可以違反被害人意願地提出告訴。（刑事訴訟法§233 Ⅰ）</p>
+					<p>須於知情後六個月提出告訴。如果知情的時間不一樣，那麼可以提出告訴的期限就也不同。（刑事訴訟法§237）</p-->
+			</details>
+			<details ng-hide="onlyUponComplaint">
+				<summary>非告訴乃論</summary>
+				<p>即使沒有任何人提出告訴，亦可偵查、起訴、判刑。</p>
+				<p>「非告訴乃論」跟「公訴」是不同的概念。「告訴」是由「民眾向檢警」提出，而「公訴」則是「檢察官向法院」提起的。</p>
+				<p>我國刑事訴訟制度中，原則上是由檢察官偵查後，向法院提起公訴。「告訴乃論」的意思是「檢察官收到告訴之後，才能在偵查終結時向法院提起公訴。」</p>
+			</details>
+			<details ng-show="remittable">
+				<summary>亦可免除其刑</summary>
+				<p>行為人仍需經歷司法審理之過程，並以法官確信其「有罪」為前提，才可能獲得「免刑」判決。</p>
+			</details>
+			<!--div>可否緩刑？緩起訴？（注意少事法關於緩刑、緩起訴的不同規定）</div-->
+		</section>
+	</section>
+	<section>
+		<h2>法條</h2>
+		<label>
+			<input type="checkbox" ng-model="classOfInapplicableArticles" ng-true-value="'hide'" ng-false-value="'translucent'">
+			隱藏不適用的法條
+		</label>
+		<p ng-hide="appliedArticles.length">沒有適用的法條。</p>
+		<nav>
+			<ul>
+				<li ng-repeat="article in articles" ng-class="getClass(article.id)"
+					ng-mouseenter="$parent.focusingArticle=article.id;" ng-mouseleave="$parent.focusingArticle='';"
+				>{{article.name}}</li>
+			</ul>
+		</nav>
+		<section ng-repeat="group in article_groups" ng-class="(classOfInapplicableArticles=='translucent')?'clear':''">
+			<article ng-repeat="article in group" ng-class="getClass(article.id)">
+				<h3>{{article.name}}</h3>
+				<p>{{article.content}}</p>
+				<details ng-if="article.details">{{article.details}}</details>
+			</article>
+		</section>
+		<div style="clear: both;"></div>
+	</section>
+	<section>
+		<h2>說明</h2>
+		<ol>
+			<li>對於未滿十八歲及年滿八十歲以上者的「得」減刑規定，理論上法官可以決定「不予」減刑，而依減刑前的刑度判決。但實際上這種情形非常少見，故本頁面於計算刑度時，概以「能減刑就減刑」的原則套用。</li>
+			<li>十八歲生日當天與七歲以上、未滿十四歲者性交，仍可適用刑法§227-1之規定而獲減刑或免刑。但因為僅對該日有影響，本頁面忽略該情形。</li>
+			<li>兩位未滿十六歲之人的合意性交或猥褻行為，將導致雙方互為加害人與被害人，雙方法定代理人互可求償（屬民事關係）。</li>
+			<li>本頁面主要呈現刑事責任，其他關於兒少保護與被害人保護、加害人處遇規定，請參閱《少年事件處理法》、《犯罪被害人保護法》、《性侵害犯罪防治法》等相關法令。</li>
+			<li>本頁面主要呈現雙方無扶養、監督、交易關係的性交行為，故未列出利用權勢、近親通姦、性交易之相關條文。</li>
+			<li>依照刑法第33條第3款，本刑標示為「七年以下」者，意思是「二月以上、七年以下」，標示為「七年以上」者，意思是「七年以上、十五年以下」。</li>
+		</ol>
+	</section>
+	<section>
+		<h2>表格化</h2>
+		<table border="1">
+			<caption>不同意時的刑度（單位：年）</caption>
+			<thead>
+				<tr>
+					<th rowspan="2"></th>
+					<th class="hor" scope="row">行為人</th>
+					<td class="hor">未滿14歲</td>
+					<td class="hor">14至18歲</td>
+					<td class="hor">18至20歲</td>
+					<td class="hor">20至80歲</td>
+					<td class="hor">80歲以上</td>
+				</tr>
+				<tr>
+					<th class="hor" scope="row">刑度調整</th>
+					<td class="hor" rowspan="2">刑§18 Ⅰ</td>
+					<td class="hor" rowspan="2">刑§18 Ⅱ</td>
+					<td class="hor" colspan="2"></td>
+					<td class="hor">刑§18 Ⅲ</td>
+				</tr>
+				<tr>
+					<th class="ver" scope="col">被害人</th>
+					<th class="ver" scope="col">罪條</th>
+					<td class="hor"></td>
+					<td class="hor" colspan="2">兒少法§112 Ⅰ</td>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td class="ver">未滿14歲</td>
+					<td class="ver">刑§222 Ⅰ②</td>
+					<td rowspan="3">不罰</td>
+					<td>3.5 ~ 7.5</td>
+					<td colspan="2">7 ~ 15</td>
+					<td>3.5 ~ 7.5</td>
+				</tr>
+				<tr>
+					<td class="ver">14至18歲</td>
+					<td class="ver" rowspan="2">刑§221 Ⅰ</td>
+					<td rowspan="2">1.5 ~ 5</td>
+					<td rowspan="2">3 ~ 10</td>
+					<td>4.5 ~ 15</td>
+					<td>2.25 ~ 7.5</td>
+				</tr>
+				<tr>
+					<td class="ver">18歲以上</td>
+					<td>3 ~ 10</td>
+					<td>1.5 ~ 5</td>
+				</tr>
+			</tbody>
+		</table>
+
+		<table border="1">
+			<caption>合意性交時，年長者的法定刑</caption>
+			<thead>
+				<tr>
+					<th rowspan="2"></th>
+					<th class="hor" scope="row">長者</th>
+					<td class="hor">未滿14歲</td>
+					<td class="hor">14至16歲</td>
+					<td class="hor">16至18歲</td>
+					<td class="hor">18歲當天</td>
+					<td class="hor">18至80歲</td>
+					<td class="hor">80歲以上</td>
+				</tr>
+				<tr>
+					<th class="hor" scope="row">刑度調整</th>
+					<td class="hor" rowspan="2">刑§18 Ⅰ</td>
+					<td class="hor" colspan="2">刑§18 Ⅱ</td>
+					<td class="hor" colspan="2"></td>
+					<td class="hor">刑§18 Ⅲ</td>
+				</tr>
+				<tr>
+					<th class="ver" scope="col">幼者</th>
+					<th class="ver" scope="col">罪條</th>
+					<td class="hor" colspan="3">刑§227-1</td>
+					<td class="hor" colspan="2"></td>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td class="ver">未滿7歲</td>
+					<td class="ver">最高法院<br>刑庭決議</td>
+					<td rowspan="2">不罰</td>
+					<td colspan="2">三年六月 至 七年六月</td>
+					<td colspan="2">七年 至 十五年</td>
+					<td>三年六月 至 七年六月</td>
+				</tr>
+				<tr>
+					<td class="ver">7至14歲</td>
+					<td class="ver">§227 Ⅰ</td>
+					<td colspan="2">免刑或<br>六月 至 一年六月</td>
+					<td>免刑或<br>一年 至 三年四月</td>
+					<td>三年 至 十年</td>
+					<td>一年六月 至 五年</td>
+				</tr>
+				<tr>
+					<td class="ver" rowspan="2">14至16歲</td>
+					<td class="ver" rowspan="2">§227 Ⅲ</td>
+					<td rowspan="2">N/A</td>
+					<td colspan="2">免刑或<br>十日 至 一年二月</td>
+					<td rowspan="2">免刑或<br>二十日 至 二年四月</td>
+					<td rowspan="2">二月 至 七年</td>
+					<td rowspan="2">一月 至 三年六月</td>
+				</tr>
+				<tr>
+					<td>雙方均有罪</td>
+					<td>僅長者有罪</td>
+				</tr>
+			</tbody>
+			<tfoot>
+				<tr>
+					<th colspan="2" class="hor">告訴乃論</th>
+					<td>N/A</td>
+					<td colspan="2">刑§229-1</td>
+					<td colspan="3">非告訴乃論</td>
+				</tr>
+			</tfoot>
+		</table>
+	</section>
+</body>
+</html>
