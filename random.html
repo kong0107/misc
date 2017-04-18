@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>Generate Random String</title>
+    <script type="text/javascript">
+document.addEventListener("DOMContentLoaded", function() {
+    var $ = function(id){return document.getElementById(id);};
+    var randomCharCode = function() {
+        switch(document.forms[0].elements.charSet.value) {
+            case "all":
+                return 32 + Math.floor(Math.random() * 95);
+            case "alphanumeric":
+                var temp = Math.floor(Math.random() * 62);
+                if(temp < 10) return temp + 48;
+                if(temp < 36) return temp - 10 + 65;
+                if(temp < 62) return temp - 36 + 97;
+                console.error(new ReferenceError);
+            default:
+                console.error(new ReferenceError);
+        }
+
+    };
+    var generate = function() {
+        var arr = [];
+        var length = parseInt($("length").value);
+        for(var i = 0; i < length; ++i) arr.push(randomCharCode());
+        console.log(arr);
+        $("result").value = String.fromCharCode.apply(null, arr);
+        return false;
+    };
+
+    generate();
+    $("length").addEventListener("change", generate);
+    $("generate").addEventListener("click", generate);
+});
+    </script>
+    <style type="text/css">
+        body {
+            background-color: #000;
+            color: #ccc;
+            line-height: 1.5;
+        }
+        #length {
+            width: 4em;
+        }
+        #result {
+            width: 8em;
+            font-size: xx-large;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>Generate Random String</h1>
+    <form>
+        <dl>
+            <dt>Which set of characters do you want?</dt>
+            <dd>
+                <label>
+                    <input type="radio" name="charSet" value="all">
+                    All printable ASCII characters (space included)
+                </label>
+                <br>
+                <label>
+                    <input type="radio" name="charSet" value="alphanumeric" checked>
+                    Alphanumeric (case-sensitive)
+                </label>
+            </dd>
+            <dt>How many characters do you want?</dt>
+            <dd><input type="number" id="length" min="1" step="1" value="8"></dd>
+            <dt>Here goes the result:</dt>
+            <dd><input type="text" id="result" readonly></dd>
+        </dl>
+        <button type="button" id="generate">Generate Again</button>
+    </form>
+</body>
+</html>
