@@ -42,6 +42,25 @@ document.addEventListener("DOMContentLoaded", function() {
             color: #ccc;
             line-height: 1.5;
         }
+        h1 > div {
+            display: inline-block;
+        }
+        label {
+            display: block;
+            margin-bottom: .5em;
+        }
+        label:after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+        input[type=radio] {
+            float: left;
+            margin-top: .5em;
+        }
+        label > div {
+            margin-left: 2em;
+        }
         #length {
             width: 4em;
         }
@@ -53,27 +72,43 @@ document.addEventListener("DOMContentLoaded", function() {
     </style>
 </head>
 <body>
-    <h1>Generate Random String</h1>
+    <h1>
+        <div lang="zh-Hant">亂碼生成</div>
+        <div lang="en">Generate Random String</div>
+    </h1>
     <form>
         <dl>
-            <dt>Which set of characters do you want?</dt>
+            <dt>
+                <div lang="zh-Hant">要用哪些字元？</div>
+                <div lang="en">Which set of characters do you want?</div>
+            </dt>
             <dd>
                 <label>
                     <input type="radio" name="charSet" value="all">
-                    All printable ASCII characters (space included)
+                    <div lang="zh-Hant">數字、英文字母與 ASCII 符號</div>
+                    <div lang="en">All printable ASCII characters (space included)</div>
                 </label>
-                <br>
                 <label>
                     <input type="radio" name="charSet" value="alphanumeric" checked>
-                    Alphanumeric (case-sensitive)
+                    <div lang="zh-Hant">數字與英文字母（區分大小寫）</div>
+                    <div lang="en">Alphanumeric (case-sensitive)</div>
                 </label>
             </dd>
-            <dt>How many characters do you want?</dt>
+            <dt>
+                <div lang="zh-Hant">需要幾個字元？</div>
+                <div lang="en">How many characters do you want?</div>
+            </dt>
             <dd><input type="number" id="length" min="1" step="1" value="8"></dd>
-            <dt>Here goes the result:</dt>
+            <dt>
+                <div lang="zh-Hant">產生結果：</div>
+                <div lang="en">Here goes the result:</div>
+            </dt>
             <dd><input type="text" id="result" readonly></dd>
         </dl>
-        <button type="button" id="generate">Generate Again</button>
+        <button type="button" id="generate">
+            <span lang="zh-Hant">再次產生</span>
+            <span lang="en">Generate Again</span>
+        </button>
     </form>
 </body>
 </html>
