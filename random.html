@@ -16,7 +16,6 @@ document.addEventListener("DOMContentLoaded", function() {
                 if(temp < 10) return temp + 48;
                 if(temp < 36) return temp - 10 + 65;
                 if(temp < 62) return temp - 36 + 97;
-                console.error(new ReferenceError);
             default:
                 console.error(new ReferenceError);
         }
@@ -26,10 +25,16 @@ document.addEventListener("DOMContentLoaded", function() {
         var arr = [];
         var length = parseInt($("length").value);
         for(var i = 0; i < length; ++i) arr.push(randomCharCode());
-        console.log(arr);
+        //console.log(arr);
         $("result").value = String.fromCharCode.apply(null, arr);
         return false;
     };
+
+    var m;
+    m = location.search.match(/[\?&]length=(\d+)/);
+    if(m) $("length").value = m[1].replace(/^0+/, "");
+    m = location.search.match(/[\?&]charSet=(\w+)/);
+    if(m) document.forms[0].elements.charSet.value = m[1];
 
     generate();
     $("length").addEventListener("change", generate);
