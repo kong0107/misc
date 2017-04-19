@@ -7,8 +7,8 @@
     <script type="text/javascript">
 document.addEventListener("DOMContentLoaded", function() {
     var $ = function(id){return document.getElementById(id);};
-    var randomCharCode = function() {
-        switch(document.forms[0].elements.charSet.value) {
+    var randomCharCode = function(charSet) {
+        switch(charSet) {
             case "all":
                 return 32 + Math.floor(Math.random() * 95);
             case "alphanumeric":
@@ -23,11 +23,13 @@ document.addEventListener("DOMContentLoaded", function() {
     };
     var generate = function() {
         var arr = [];
+        var charSet = document.forms[0].elements.charSet.value;
         var length = parseInt($("length").value);
-        for(var i = 0; i < length; ++i) arr.push(randomCharCode());
-        //console.log(arr);
+        for(var i = 0; i < length; ++i) arr.push(randomCharCode(charSet));
         $("result").value = String.fromCharCode.apply(null, arr);
-        return false;
+        /*window.history.pushState("", "",
+            location.pathname + "?length=" + length + "&charSet=" + charSet
+        );*/
     };
 
     var m;
