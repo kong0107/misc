@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="HandheldFriendly" content="True">
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, maximum-scale=1">
     <title>Show Time</title>
     <script type="text/javascript">
         const zeroFill = function(num, length) {
@@ -30,7 +30,7 @@
             const adjustFontSize = function() {
                 const width = window.innerWidth;
                 ed.style.fontSize = parseInt(width / 12) + "px";
-                et.style.fontSize = parseInt(width / 6) + "px";
+                et.style.fontSize = parseInt((width - 100) / 6) + "px";
                 ed.style.marginTop = (window.innerHeight - width / 4) / 2 + "px";
             }
 
