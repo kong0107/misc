@@ -4,8 +4,8 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="HandheldFriendly" content="True">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-    <title>Display Time</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <title>Show Time</title>
     <script type="text/javascript">
         const zeroFill = function(num, length) {
             if(typeof length != "number") length = 2;
@@ -13,41 +13,42 @@
             while(num.length < length) num = "0" + num;
             return num;
         };
-    
+
         window.addEventListener("load", function() {
             const dayText = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
             const ed = document.getElementById("date");
             const et = document.getElementById("time");
-            const displayTime = function() {
+            const showTime = function() {
                 const d = new Date();
-                ed.innerHTML = d.getFullYear() 
-                    + "/" + zeroFill(d.getMonth() + 1) 
-                    + "/" + zeroFill(d.getDate()) 
+                ed.innerHTML = d.getFullYear()
+                    + "/" + zeroFill(d.getMonth() + 1)
+                    + "/" + zeroFill(d.getDate())
                     + " (" + dayText[d.getDay()] + ")"
                 ;
                 et.innerHTML = d.toTimeString().split(" ")[0] + "." + parseInt(d.getMilliseconds() / 100);
             };
             const adjustFontSize = function() {
                 const width = window.innerWidth;
-                ed.style.fontSize = parseInt(width / 16) + "px";
-                et.style.fontSize = parseInt(width / 8) + "px";
+                ed.style.fontSize = parseInt(width / 12) + "px";
+                et.style.fontSize = parseInt(width / 6) + "px";
                 ed.style.marginTop = (window.innerHeight - width / 4) / 2 + "px";
             }
-            
+
             window.addEventListener("resize", adjustFontSize);
             adjustFontSize();
 
-            window.timer = setInterval(displayTime, 100);
+            window.timer = setInterval(showTime, 100);
             document.body.removeChild(document.getElementById("loading"));
-            displayTime();
+            showTime();
         });
     </script>
     <style type="text/css">
         body {
             text-align: center;
-            font-family: monospace;
+            font-family: "Courier New", "Courier", monospace;
             background-color: #000;
             color: #fff;
+            overflow: hidden;
         }
     </style>
 </head>
