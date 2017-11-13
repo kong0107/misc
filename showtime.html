@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="HandheldFriendly" content="True">
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, maximum-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
     <title>Show Time</title>
     <script type="text/javascript">
         const zeroFill = function(num, length) {
@@ -26,6 +26,19 @@
                     + " (" + dayText[d.getDay()] + ")"
                 ;
                 et.innerHTML = d.toTimeString().split(" ")[0] + "." + parseInt(d.getMilliseconds() / 100);
+
+                const diff = 127;
+                var rgb = [255, 255, 255];
+
+                rgb[0] = 255 - parseInt(diff * d.getMonth() / 11);
+                rgb[1] = 255 - parseInt(diff * (d.getDate() - 1) / 30);
+                rgb[2] = 255 - parseInt(diff * d.getDay() / 6);
+                ed.style.color = "rgb(" + rgb.join(",") +")";
+
+                rgb[0] = 255 - parseInt(diff * d.getHours() / 23);
+                rgb[1] = 255 - parseInt(diff * d.getMinutes() / 59);
+                rgb[2] = 255 - parseInt(diff * d.getSeconds() / 59);
+                et.style.color = "rgb(" + rgb.join(",") +")";
             };
             const adjustFontSize = function() {
                 const width = window.innerWidth;
