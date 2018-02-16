@@ -53,6 +53,7 @@ window.onload = (function(){
 	};
 	var hasUrl = false;
 	var s = document.location.search;
+	var auto = false;
 	var url = '';
 	var parse_str_rot13 = false;
 	return function(){
@@ -67,6 +68,10 @@ window.onload = (function(){
 				var v = pair[1];
 				if(!v) continue;
 				switch(p){
+					case 'auto':
+						if(v != '0' && v != 'false')
+							auto = true;
+						break;
 					case 'url':
 						if(v.length < 10) break;
 						hasUrl = true;
@@ -109,6 +114,7 @@ window.onload = (function(){
 				document.getElementById('warning-en').textContent = wm_en;
 
 				if(parse_str_rot13) url = str_rot13(url);
+				if(auto) location.replace(url);
 				var a = document.getElementById('url');
 				a.href = url;
 				a.textContent = url;
