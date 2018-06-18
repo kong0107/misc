@@ -5,25 +5,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="author" content="kong0107">
 <title>Multiplication Practice</title>
-<style type="text/css"></style>
+<style type="text/css"> body, button {font-size: 4rem;} </style>
 <script type="text/javascript">
 	window.addEventListener("load", function() {
-		var $ = function(id) {return document.getElementById(id);};
-		var rand = function() {return Math.floor(Math.random() * 98) + 2;};
-		var multiplicand = rand();
-		var multiplier = rand();
-		$("multiplicand").textContent = multiplicand.toString();
-		$("multiplier").textContent = multiplier.toString();
+		const $ = function(id) {return document.getElementById(id);};
+        const r = function() {return "123456789".charAt(Math.floor(Math.random() * 9));};
+		let multiplicand = $("multiplicand").textContent = r() + r();
+		let multiplier = $("multiplier").textContent = r() + r();
 		$("product").style.display = "none";
 		$("product").textContent = (multiplicand * multiplier).toString();
-		
-		var timer = new Date;
+
+		let timer = new Date;
 		$("answer").addEventListener("click", function() {
 			$("answer").style.display = "none";
 			$("product").style.display = "";
 			$("score").textContent = ((new Date).getTime() - timer.getTime()).toString() + " milliseconds passed.";
 		});
-		
+
 		$("reloader").addEventListener("click", function() {
 			location.reload();
 		});
@@ -32,7 +30,7 @@
 </head>
 <body>
 	<span id="multiplicand"></span>
-	&#x00d7;
+	&times;
 	<span id="multiplier"></span>
 	=
 	<span id="product"></span>
