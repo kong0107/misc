@@ -18,6 +18,11 @@
             const dayText = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
             const ed = document.getElementById("date");
             const et = document.getElementById("time");
+
+            const ds = window.location.search.match(/[\?&]decisecond=([^&]+)/);
+            const style = window.location.search.match(/[\?&]style=([^&]+)/);
+            if(style) document.body.setAttribute("style", style[1]);
+
             const showTime = function() {
                 const d = new Date();
                 ed.innerHTML = d.getFullYear()
@@ -25,7 +30,10 @@
                     + "/" + zeroFill(d.getDate())
                     + " (" + dayText[d.getDay()] + ")"
                 ;
-                et.innerHTML = d.toTimeString().split(" ")[0] + "." + parseInt(d.getMilliseconds() / 100);
+                et.innerHTML = d.toTimeString().split(" ")[0];
+                if(ds) et.innerHTML += "." + parseInt(d.getMilliseconds() / 100);
+
+                if(style) return;
 
                 const diff = 127;
                 var rgb = [255, 255, 255];
