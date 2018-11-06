@@ -1,3 +1,7 @@
+/**
+ Data source: https://www.cec.gov.tw/central/cms/speechtable107
+ */
+
 const proposals = [
     {
         id: 7,
