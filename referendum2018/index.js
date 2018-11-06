@@ -15,8 +15,8 @@ class Presentation extends React.Component {
     const youtube = "https://youtu.be/" + p.youtube + (p.session == 1 ? "?t=1620" : "");
 
     let text;
-    if(time > now) text = `${time.getMonth()+1}/${time.getDate()}(${weekdays[time.getDay()]}) ` + p.time.split(" ")[1];
-    else if(time*1 + 3600*1000 > now) text = "觀看直播";
+    if(time.getTime() > now.getTime()) text = `${time.getMonth()+1}/${time.getDate()}(${weekdays[time.getDay()]}) ` + p.time.split(" ")[1];
+    else if(time.getTime() + 3600*1000 > now.getTime()) text = "觀看直播";
     else text = "觀看錄影";
 
     return e(
