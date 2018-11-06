@@ -19,8 +19,9 @@
             const ed = document.getElementById("date");
             const et = document.getElementById("time");
 
-            const ds = window.location.search.match(/[\?&]decisecond=([^&]+)/);
-            const style = window.location.search.match(/[\?&]style=([^&]+)/);
+            const s = window.location.search;
+            const decisecond = s.match(/[\?&]decisecond=([^&]+)/);
+            const style = s.match(/[\?&]style=([^&]+)/);
             if(style) document.body.setAttribute("style", style[1]);
 
             const showTime = function() {
@@ -31,7 +32,7 @@
                     + " (" + dayText[d.getDay()] + ")"
                 ;
                 et.innerHTML = d.toTimeString().split(" ")[0];
-                if(ds) et.innerHTML += "." + parseInt(d.getMilliseconds() / 100);
+                if(decisecond) et.innerHTML += "." + parseInt(d.getMilliseconds() / 100);
 
                 if(style) return;
 
