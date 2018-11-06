@@ -11,12 +11,12 @@ class Presentation extends React.Component {
   constructor(props) { super(props); }
   render() {
     const p = this.props;
-    const time = new Date(p.time.replace(/-/g, "/"));
-    const youtube = "https://youtu.be/" + p.youtube + (p.session == 1 ? "?t=1620" : "");
+    const time = new Date(p.time.replace(/-/g, "/"));   ///< 手機上只看得懂以斜線作為年月日間隔符號的格式。
+    const youtube = "https://youtu.be/" + p.youtube + (p.session == 1 ? "?t=1620" : "");    ///< 民視在27~29分鐘前就開始直播了。
 
     let text;
-    if(time.getTime() > now.getTime()) text = `${time.getMonth()+1}/${time.getDate()}(${weekdays[time.getDay()]}) ` + p.time.split(" ")[1];
-    else if(time.getTime() + 3600*1000 > now.getTime()) text = "觀看直播";
+    if(time > now) text = `${time.getMonth()+1}/${time.getDate()}(${weekdays[time.getDay()]}) ` + p.time.split(" ")[1];
+    else if(time*1 + 3600*1000 > now.getTime()) text = "觀看直播";
     else text = "觀看錄影";
 
     return e(
@@ -47,7 +47,9 @@ class PresentationsPerProposal extends React.Component {
         "div", {className: "row mb-3"},
         e("div", {className: "col-md-2 small mb-2"},
             e("div", null,
-                e("h5", {className: "mb-0 font-weight-bold d-inline-block", id: `proposal${this.props.id}`}, `第 ${this.props.id} 案`),
+                e("h5", {className: "mb-0 font-weight-bold d-inline-block", id: `proposal${this.props.id}`},
+                    e("a", {href: `#proposal${this.props.id}`}, `第 ${this.props.id} 案`)
+                ),
                 e("span", {className: "text-muted pl-3"}, "by " + p.proposer)
             ),
             e("p", {className: "my-0"},
