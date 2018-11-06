@@ -11,7 +11,7 @@ class Presentation extends React.Component {
   constructor(props) { super(props); }
   render() {
     const p = this.props;
-    const time = new Date(p.time);
+    const time = new Date(p.time.replace(/-/g, "/"));
     const youtube = "https://youtu.be/" + p.youtube + (p.session == 1 ? "?t=1620" : "");
 
     let text;
