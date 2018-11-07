@@ -16,10 +16,19 @@ function Presentation(p) {
     const time = new Date(p.time.replace(/-/g, "/"));   ///< 手機上只看得懂以斜線作為年月日間隔符號的格式。
     const youtube = "https://youtu.be/" + p.youtube + (p.session == 1 ? "?t=1620" : "");    ///< 民視在27~29分鐘前就開始直播了。
 
-    let text;
-    if(time > now) text = (time.getMonth()+1) + "/" + time.getDate() + "(" + weekdays[time.getDay()] + ") " + p.time.split(" ")[1];
-    else if(time*1 + 3600*1000 > now.getTime()) text = "觀看直播";
-    else text = "觀看錄影";
+    let text, btnClass;
+    if(time > now) {
+        text = (time.getMonth()+1) + "/" + time.getDate() + "(" + weekdays[time.getDay()] + ") " + p.time.split(" ")[1];
+        btnClass = "btn-outline-primary";
+    }
+    else if(time*1 + 3600*1000 > now.getTime()) {
+        text = "直播進行中";
+        btnClass = "btn-danger";
+    }
+    else {
+        text = "觀看錄影";
+        btnClass = "btn-primary";
+    }
 
     return e(
         "div", {className: "col-md-2 mb-3"},
@@ -31,9 +40,10 @@ function Presentation(p) {
         ),
         e("div", {className: ""},
             e("a", {
-                className: "btn btn-outline-primary btn-sm",
+                className: "btn btn-sm " + btnClass,
                 href: youtube,
-                target: "_blank"
+                target: "_blank",
+                title: p.time
             }, text)
         )
     );
