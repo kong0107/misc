@@ -533,3 +533,31 @@ const presentations = [
 ];
 
 const sessionsBy = ["", "民視", "臺視", "中視", "公視", "華視"];
+
+const links = [
+    {
+        text: "多檔下載",
+        title: "Google 雲端硬碟",
+        link: "https://drive.google.com/open?id=1RCwZUsu3MZmzFRh0s0YB9Npc2F1s0YLq"
+    },
+    {
+        text: "資料來源",
+        title: "中央選舉委員會:::107年公投案意見發表會播出場次表:::",
+        link: "https://www.cec.gov.tw/central/cms/speechtable107"
+    },
+    {
+        text: "本頁源碼",
+        title: "GitHub",
+        link: "https://github.com/kong0107/misc/tree/gh-pages/referendum2018"
+    },
+    {
+        text: "版權宣告",
+        title: "Copyright",
+        link: "https://github.com/kong0107/misc/blob/gh-pages/referendum2018/README.md"
+    },
+    {
+        text: "本頁作者",
+        title: "阿空",
+        link: "https://facebook.com/kong.sex"
+    }
+];

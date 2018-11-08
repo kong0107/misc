@@ -54,13 +54,14 @@ const getPresentation = function(proposal, session) {
 function Presentation(p) {
     const time = new Date(p.time);
     const youtube = "https://youtu.be/" + p.youtube + (p.session == 1 ? "?t=1620" : "");    ///< 民視在27~29分鐘前就開始直播了。
+    const endTime = time.getTime() + ((p.negative == "無") ? 30 : 50) * 60 * 1000;   ///< 只有正方時，中間還是會休息放廣告。
 
     let text, btnClass;
     if(time > now) {
         text = time2text(time);
         btnClass = "btn-outline-primary";
     }
-    else if(time*1 + 3600*1000 > now.getTime()) {
+    else if(endTime > now.getTime()) {
         text = "直播進行中";
         btnClass = "btn-danger";
     }
@@ -215,5 +216,23 @@ if(next) {
     setTimeout(function(){window.location.reload();},showTime());
     setInterval(showTime, 1000);
 }
+
+/**
+ * 底部連結
+ */
+const listItems = links.map(function(item) {
+    return e("li", {className: "list-inline-item"},
+        e("a", {
+            target: "_blank",
+            className: "btn btn-sm btn-outline-secondary",
+            href: item.link,
+            title: item.title
+        }, item.text)
+    );
+});
+ReactDOM.render(
+    e("ul", {className: "list-inline"}, listItems),
+    $("footer")
+);
 
 }
