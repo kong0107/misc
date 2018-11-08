@@ -279,7 +279,7 @@ const presentations = [
     {
         proposal: 9,
         session: 3,
-        youtube: "82VS2us_1-I",
+        youtube: "1GPXKhXeEGc",/// "82VS2us_1-I", 竟然改過！？
         time: "2018-11-08 15:00",
         positive: "王育敏",
         negative: "黃士修",

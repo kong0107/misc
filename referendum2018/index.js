@@ -92,7 +92,7 @@ function Presentation(p) {
 function ProposalLink(p) {
     return e("a", {
         href: "#proposal" + p.id,
-        title: p.mainText
+        title: p.mainText + "\n（提案領銜：" + p.proposer + "）"
     }, "第 " + p.id + " 案");
 }
 
@@ -107,11 +107,11 @@ function PresentationsPerProposal(p) {
                 e("h5", {className: "mb-0 font-weight-bold d-inline-block", id: "proposal" + p.id},
                     e(ProposalLink, p)
                 ),
-                e("span", {className: "text-muted pl-3"}, "by " + p.proposer)
+                e("span", {className: "text-muted pl-3", title: "提案領銜"}, "by " + p.proposer)
             ),
             e("p", {className: "my-0"},
                 p.mainText,
-                e("a", {className: "d-inline d-md-block pl-3 pl-md-0", href: p.reasons, target: "_blank"}, "理由書")
+                e("a", {className: "d-inline d-md-block pl-3 pl-md-0", href: p.reasons, target: "_blank"}, "理由及政府意見")
             )
         ),
         ps //...
@@ -200,7 +200,11 @@ if(next) {
             e(ProposalLink, getProposal(next.proposal)),
             " 第" + weekdays[next.session] + "場次 ",
             e("span", {className: "text-nowrap"}, next.positive + " vs. " + next.negative),
-            e("div", {id: "remainingTimeContainer", className: "text-muted d-inline-block"})
+            e("div", {
+                id: "remainingTimeContainer",
+                className: "text-muted d-inline-block",
+                title: next.time
+            })
         ),
         $("next-container")
     );
