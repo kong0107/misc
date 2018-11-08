@@ -20,7 +20,6 @@ class DataSearch extends React.Component {
             filtered: filtered,
             page: 1
         });
-        console.log(filtered.length);
     }
 
     getTotalPage() {
@@ -40,7 +39,6 @@ class DataSearch extends React.Component {
         const p = this.state.page;
         const rows = this.state.filtered
             .slice((p-1)*rpp, p*rpp)
-            //.slice(0, 20)
             .map(ds =>
                 e("tr", {key: ds[0]},
                     e("td", null, ds[0]),
@@ -79,13 +77,25 @@ class DataSearch extends React.Component {
                     value: this.state.page
                 }),
                 "頁",
+                e("button", {
+                    title: "上一頁",
+                    className: "btn btn-sm btn-primary mx-1",
+                    disabled: this.state.page == 1,
+                    onClick: ()=>{this.setState({page: this.state.page - 1 })}
+                }, "\u25C0"),
+                e("button", {
+                    title: "下一頁",
+                    className: "btn btn-sm btn-primary mx-1",
+                    disabled: this.state.page >= this.getTotalPage(),
+                    onClick: ()=>{this.setState({page: this.state.page + 1 })}
+                }, "\u25B6"),
                 e("span", {className: "text-muted small"},
                     "（共",
                     this.getTotalPage(),
                     "頁）"
                 )
             ),
-            e("table", {className: "table table-striped table-hover table-sm"},
+            e("table", {className: "table table-striped table-hover table-sm my-2"},
                 e("thead", null,
                     e("tr", null,
                         e("th", null, "ID"),
