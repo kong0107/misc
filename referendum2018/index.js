@@ -162,7 +162,9 @@ for(let i = 0; i < presentations.length; ++i) {
         next = p;
         break;  ///< 因為 presentations 剛好照時間排列才能這樣做。
     }
-    if(time + 3600*1000 > now) ongoing = p;
+
+    const endTime = time + ((p.negative == "無") ? 30 : 50) * 60 * 1000;   ///< 只有正方時，中間還是會休息放廣告。
+    if(endTime > now) ongoing = p;
 }
 
 const ms2text = function(ms) {
