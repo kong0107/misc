@@ -1,6 +1,6 @@
 "use strict";
 {
-const $ = function(s) {return document.querySelector(s);};
+const $ = s => document.querySelector(s);
 const e = React.createElement;
 const rpp = 20;
 
@@ -41,7 +41,7 @@ class DataSearch extends React.Component {
             .slice((p-1)*rpp, p*rpp)
             .map(ds =>
                 e("tr", {key: ds[0]},
-                    e("td", null, ds[0]),
+                    e("td", {className: "text-right"}, ds[0]),
                     e("td", null,
                         e("a",{
                             href: "https://data.gov.tw/dataset/" + ds[0]
@@ -59,10 +59,10 @@ class DataSearch extends React.Component {
                     placeholder: "搜尋",
                     className: "form-control-sm"
                 }),
-                e("span", {className: "text-muted small"},
-                    "（共",
+                e("span", {className: "text-muted small mx-1"},
+                    "共",
                     this.state.filtered.length,
-                    "資料集）"
+                    "資料集"
                 )
             ),
             e("div", null,
@@ -89,16 +89,16 @@ class DataSearch extends React.Component {
                     disabled: this.state.page >= this.getTotalPage(),
                     onClick: ()=>{this.setState({page: this.state.page + 1 })}
                 }, "\u25B6"),
-                e("span", {className: "text-muted small"},
-                    "（共",
+                e("span", {className: "text-muted small mx-1"},
+                    "共",
                     this.getTotalPage(),
-                    "頁）"
+                    "頁"
                 )
             ),
             e("table", {className: "table table-striped table-hover table-sm my-2"},
                 e("thead", null,
                     e("tr", null,
-                        e("th", null, "ID"),
+                        e("th", {style: {width: "4em"}}, "ID"),
                         e("th", null, "資料集名稱")
                     )
                 ),
@@ -111,6 +111,11 @@ class DataSearch extends React.Component {
 ReactDOM.render(
     e(DataSearch),
     $("main")
+);
+
+if(updateDate) ReactDOM.render(
+    updateDate + "更新",
+    $("#updateDate")
 );
 
 }
