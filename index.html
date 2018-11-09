@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="utf-8">
+    <link rel="shortcut icon" href="/images/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <script src="https://unpkg.com/react@16/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js" crossorigin></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <title>阿空的雜項網頁作品</title>
+  </head>
+  <body>
+    <div class="container">
+        <h1 class="lead">
+            <a href="https://kong0107.github.io">阿空</a>的網頁作品
+        </h1>
+        <main></main>
+    </div>
+    <script type="text/javascript">
+const links = [
+    {
+        "link": "redirect.html",
+        "text": "帶有警語的轉址頁面"
+    },
+    {
+        "link": "showtime.html",
+        "text": "顯示時間"
+    },
+    {
+        "link": "random.html",
+        "text": "密碼生成"
+    },
+    {
+        "link": "calc.html",
+        "text": "二位數乘法心算練習"
+    },
+    {
+        "link": "age-of-consent/",
+        "text": "性交年齡限制條文與情境查詢"
+    },
+    {
+        "link": "referendum2018/",
+        "text": "107年公投案意見發表會一覽"
+    },
+    {
+        "link": "datagovtw/",
+        "text": "政府資料開放平臺資料集清單"
+    },
+    {
+        "link": "/mojLaw/",
+        "text": "法規查詢"
+    }
+];
+
+const e = React.createElement;
+ReactDOM.render(
+    e("table", {className: "table table-striped table-hover table-sm"},
+        e("thead", null,
+            e("tr", null,
+                e("th", null, "路徑"),
+                e("th", null, "功能")
+            )
+        ),
+        e("tbody", null,
+            links.map(function(item) {return e("tr", {key: item.link},
+                e("td", null, e("a", {href: item.link}, item.link)),
+                e("td", null, item.text)
+            )})
+        )
+    ),
+    document.querySelector("main")
+);
+
+    </script>
+  </body>
+</html>
