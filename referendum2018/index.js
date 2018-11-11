@@ -164,7 +164,10 @@ for(let i = 0; i < presentations.length; ++i) {
     }
 
     const endTime = time + ((p.negative == "無") ? 30 : 50) * 60 * 1000;   ///< 只有正方時，中間還是會休息放廣告。
-    if(endTime > now) ongoing = p;
+    if(endTime > now) {
+        ongoing = p;
+        setTimeout(function(){window.location.reload();}, endTime - now);
+    }
 }
 
 const ms2text = function(ms) {
@@ -219,7 +222,7 @@ if(next) {
         );
         return remainingTime;
     };
-    setTimeout(function(){window.location.reload();},showTime());
+    setTimeout(function(){window.location.reload();}, showTime());
     setInterval(showTime, 1000);
 }
 

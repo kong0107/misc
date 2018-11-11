@@ -551,11 +551,6 @@ const links = [
         link: "https://github.com/kong0107/misc/tree/gh-pages/referendum2018"
     },
     {
-        text: "版權宣告",
-        title: "Copyright",
-        link: "https://github.com/kong0107/misc/blob/gh-pages/referendum2018/README.md"
-    },
-    {
         text: "本頁作者",
         title: "阿空",
         link: "https://facebook.com/kong.sex"
