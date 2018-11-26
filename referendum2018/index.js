@@ -152,7 +152,8 @@ ReactDOM.render(
 
 
 /**
- * 接下來是「現正播映」和「下個節目」
+ * 「現正播映」和「下個節目」
+ * 雖然都結束了所以不會啟動，不過還是留著吧。
  */
 let ongoing, next;
 for(let i = 0; i < presentations.length; ++i) {
