@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="utf-8">
+    <link rel="shortcut icon" href="/images/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    <title>日期與62進位轉換</title>
+  </head>
+  <body>
+    <div class="container">
+      <div>
+        <input id="iDate" type="date" value="2019-10-08">
+        <input id="iTime" type="time">
+        &rArr;
+        <input id="oText" type="text" readonly="readonly">
+      </div>
+      <div>
+        <input id="iText" type="text" value="JA8">
+        &rArr;
+        <input id="oTime" type="text" readonly="readonly">
+      </div>
+      <button id="button">Convert</button>
+    </div>
+    <script>
+      const parse62 = p => {
+        switch(typeof p) {
+          case "number":
+            if(p < 0 || p > 61) {
+                throw new RangeError;
+                return NaN;
+            }
+            if(p < 36) return p.toString(36).toUpperCase();
+            else return (p - 26).toString(36);
+          case "string":
+            if(p.length !== 1) {
+              throw new RangeError;
+              return NaN;
+            }
+            const upper = p.toUpperCase();
+            return parseInt(p, 36) + ((upper === p) ? 0 : 26);
+          default:
+            throw new TypeError;
+            return NaN;
+        }
+      };
+      const zeroFill = (num, digits = 2) => {
+        num = num.toString();
+        while(num.length < 2) num = "0" + num;
+        return num;
+      }
+
+      const button = document.querySelector("#button"),
+        iDate = document.querySelector("#iDate"),
+        iTime = document.querySelector("#iTime"),
+        iText = document.querySelector("#iText"),
+        oText = document.querySelector("#oText"),
+        oTime = document.querySelector("#oTime")
+      ;
+      button.addEventListener("click", ()=> {
+        oText.value = iDate.value.split("-").map(ns =>
+          parse62(parseInt(ns.substr(-2,2), 10))
+        ).reduce((prev, cur) => prev + cur);
+        iTime.value.split(":").forEach(ns => {
+          if(!ns) return;
+          oText.value += parse62(parseInt(ns, 10));
+        });
+
+        const text = iText.value.trim();
+        if(text.length < 3) return;
+        const digits = text.split("").map(parse62);
+        oTime.value = (digits[0] + 2000) + "-" + zeroFill(digits[1]) + "-" + zeroFill(digits[2]);
+        for(let i = 3; i < text.length; ++i) {
+          oTime.value += (i === 3) ? " " : ":";
+          oTime.value += zeroFill(digits[i]);
+        }
+      });
+    </script>
+  </body>
+</html>
