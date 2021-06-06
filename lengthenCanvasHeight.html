@@ -7,47 +7,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
     <title></title>
     <script type="text/javascript">
-      function showMessage(msg = "", isError = false) {
-        document.querySelector("#message").textContent = msg;
-        if(isError) console.error(msg);
-        else if(msg) console.log(msg);
+      function qs(q) {
+        return document.querySelector(q);
+      }
+      function warningMessage(msg = "") {
+        qs("#result").style.display = "none";
+        qs("#message").textContent = msg;
       }
       window.addEventListener("load", function() {
-        document.querySelector("input[type=file]").addEventListener("change", event => {
+        qs("input[type=file]").addEventListener("change", event => {
           const files = event.target.files;
-          if(!files.length) {
-            showMessage("File input cleared by the user.");
-            return;
-          }
+          if(!files.length) return warningMessage("File input cleared by the user.");
 
-          const file = files[0];
-          if(file.type.substr(0, 6) != "image/") {
-            showMessage("File selected is not an image.");
-            event.target.value = "";
-            return;
-          }
-
-          showMessage();
-          createImageBitmap(file)
+          warningMessage();
+          createImageBitmap(files[0])
           .then(bitmap => {
-            const canvas = document.createElement("CANVAS");
+            const canvas = qs("CANVAS");
             canvas.width = bitmap.width;
             canvas.height = Math.ceil(bitmap.height * 1334 / 1150);
 
             const context = canvas.getContext("2d");
             context.drawImage(bitmap, 0, 0);
+            const url = canvas.toDataURL("image/jpeg", 0.8);
 
-            const a = document.createElement("A");
-            a.download = "lengthenHeight.jpeg";
-            a.target = "_blank";
-            a.href = canvas.toDataURL("image/jpeg", 0.8);
-
-            a.click();
+            qs("IMG").src = url;
+            qs("A").href = url;
+            qs("#result").style.display = "";
           })
-          .catch(reason => {
-            showMessage(reason, true);
-          });
-
+          .catch(reason => warningMessage(reason));
         });
       });
     </script>
@@ -57,5 +44,10 @@
     <p>Select an image file, then space is added below the image. Setting the new image as the wallpaper then will not crop the content of the origin image.</p>
     <input type="file">
     <div id="message"></div>
+    <div id="result" style="display: none">
+      <canvas></canvas>
+      <img>
+      <a download="lengthenHeight.jpeg">下載 Download</a>
+    </div>
 </body>
 </html>
