@@ -14,6 +14,14 @@
         qs("#result").style.display = "none";
         qs("#message").textContent = msg;
       }
+      function getAverageColor(imageData) {
+        const sumRGBA = imageData.data.reduce((acc, cur, index) => {
+          acc[index % 4] += cur;
+          return acc;
+        }, [0, 0, 0, 0]);
+        return sumRGBA.map(sum => Math.floor(sum / (imageData.width * imageData.height)));
+      }
+
       window.addEventListener("load", function() {
         qs("input[type=file]").addEventListener("change", event => {
           const files = event.target.files;
@@ -28,8 +36,11 @@
 
             const context = canvas.getContext("2d");
             context.drawImage(bitmap, 0, 0);
-            const url = canvas.toDataURL("image/jpeg", 0.8);
+            const averageColor = getAverageColor(context.getImageData(0, 0, bitmap.width, bitmap.height));
+            context.fillStyle = `rgb(${averageColor[0]}, ${averageColor[1]}, ${averageColor[2]})`;
+            context.fillRect(0, bitmap.height, bitmap.width, canvas.height - bitmap.height);
 
+            const url = canvas.toDataURL("image/jpeg", 0.8);
             qs("IMG").src = url;
             qs("A").href = url;
             qs("#result").style.display = "";
@@ -45,8 +56,8 @@
     <input type="file">
     <div id="message"></div>
     <div id="result" style="display: none">
-      <canvas></canvas>
-      <img>
+      <canvas style="width: 40%"></canvas>
+      <img style="width: 40%">
       <a download="lengthenHeight.jpeg">下載 Download</a>
     </div>
 </body>
