@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <title></title>
+    <script type="text/javascript">
+      function showMessage(msg = "", isError = false) {
+        document.querySelector("#message").textContent = msg;
+        if(isError) console.error(msg);
+        else if(msg) console.log(msg);
+      }
+      window.addEventListener("load", function() {
+        document.querySelector("input[type=file]").addEventListener("change", event => {
+          const files = event.target.files;
+          if(!files.length) {
+            showMessage("File input cleared by the user.");
+            return;
+          }
+
+          const file = files[0];
+          if(file.type.substr(0, 6) != "image/") {
+            showMessage("File selected is not an image.");
+            event.target.value = "";
+            return;
+          }
+
+          showMessage();
+          createImageBitmap(file)
+          .then(bitmap => {
+            const canvas = document.createElement("CANVAS");
+            canvas.width = bitmap.width;
+            canvas.height = Math.ceil(bitmap.height * 1334 / 1150);
+
+            const context = canvas.getContext("2d");
+            context.drawImage(bitmap, 0, 0);
+
+            const a = document.createElement("A");
+            a.download = "lengthenHeight.jpeg";
+            a.target = "_blank";
+            a.href = canvas.toDataURL("image/jpeg", 0.8);
+
+            a.click();
+          })
+          .catch(reason => {
+            showMessage(reason, true);
+          });
+
+        });
+      });
+    </script>
+</head>
+<body>
+    <p>選擇一個圖片檔，即會將圖片下方加上空間，以利設定為 iPhone 6, 6s, 7, 8, SE2 的桌布，並使原圖的垂直方向不會被下方的工具列擋到。</p>
+    <p>Select an image file, then space is added below the image. Setting the new image as the wallpaper then will not crop the content of the origin image.</p>
+    <input type="file">
+    <div id="message"></div>
+</body>
+</html>
