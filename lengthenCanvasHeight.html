@@ -23,19 +23,28 @@
       }
 
       window.addEventListener("load", function() {
+        if(typeof createImageBitmap != "function") {
+          document.body.textContent = "This browser does not support `createImageBitmap` method.";
+          return;
+        }
+
         qs("input[type=file]").addEventListener("change", event => {
           const files = event.target.files;
           if(!files.length) return warningMessage("File input cleared by the user.");
 
-          warningMessage();
+          warningMessage("Processing... ");
           createImageBitmap(files[0])
           .then(bitmap => {
+            warningMessage("bitmap created");
             const canvas = qs("CANVAS");
             canvas.width = bitmap.width;
             canvas.height = Math.ceil(bitmap.height * 1334 / 1150);
 
+            warningMessage("copy the image to the canvas");
             const context = canvas.getContext("2d");
             context.drawImage(bitmap, 0, 0);
+
+            warningMessage("fill the rest with the average color");
             const averageColor = getAverageColor(context.getImageData(0, 0, bitmap.width, bitmap.height));
             context.fillStyle = `rgb(${averageColor[0]}, ${averageColor[1]}, ${averageColor[2]})`;
             context.fillRect(0, bitmap.height, bitmap.width, canvas.height - bitmap.height);
@@ -43,22 +52,29 @@
             const url = canvas.toDataURL("image/jpeg", 0.8);
             qs("IMG").src = url;
             qs("A").href = url;
+            warningMessage("Done!");
             qs("#result").style.display = "";
           })
           .catch(reason => warningMessage(reason));
         });
       });
     </script>
+    <style type="text/css">
+      canvas, img {
+        max-width: 45%;
+      }
+    </style>
 </head>
 <body>
     <p>選擇一個圖片檔，即會將圖片下方加上空間，以利設定為 iPhone 6, 6s, 7, 8, SE2 的桌布，並使原圖的垂直方向不會被下方的工具列擋到。</p>
     <p>Select an image file, then space is added below the image. Setting the new image as the wallpaper then will not crop the content of the origin image.</p>
     <input type="file">
     <div id="message"></div>
-    <div id="result" style="display: none">
-      <canvas style="width: 40%"></canvas>
-      <img style="width: 40%">
+    <div id="result" style="display: none; margin-top: 2em;">
       <a download="lengthenHeight.jpeg">下載 Download</a>
+      <br>
+      <canvas></canvas>
+      <img>
     </div>
 </body>
 </html>
