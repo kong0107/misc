@@ -5,15 +5,21 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="HandheldFriendly" content="True">
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-    <title></title>
+    <title>Add redundant blank to bottom of an image</title>
     <script type="text/javascript">
       function qs(q) {
         return document.querySelector(q);
       }
-      function warningMessage(msg = "") {
+
+      function logMessage(msg = "") {
         qs("#result").style.display = "none";
-        qs("#message").textContent = msg;
+        if(msg) {
+          qs("#message").textContent += msg + "\n";
+          console.log(msg);
+        }
+        else qs("#message").textContent = "";
       }
+
       function getAverageColor(imageData) {
         const sumRGBA = imageData.data.reduce((acc, cur, index) => {
           acc[index % 4] += cur;
@@ -22,59 +28,113 @@
         return sumRGBA.map(sum => Math.floor(sum / (imageData.width * imageData.height)));
       }
 
-      window.addEventListener("load", function() {
-        if(typeof createImageBitmap != "function") {
-          document.body.textContent = "This browser does not support `createImageBitmap` method.";
-          return;
-        }
+      function readFileAsImage(file) {
+        const reader = new FileReader();
+        return new Promise((resolve, reject) => {
+          reader.addEventListener("load", () => {
+            const imgElem = new Image();
+            imgElem.addEventListener("load", () => resolve(imgElem));
+            imgElem.addEventListener("error", () => reject("The source image could not be decoded."));
+            imgElem.src = reader.result;
+          });
+          reader.addEventListener("error", () => reject(reader.error));
+          reader.readAsDataURL(file);
+        });
+      };
 
+      window.addEventListener("load", () => {
         qs("input[type=file]").addEventListener("change", event => {
           const files = event.target.files;
-          if(!files.length) return warningMessage("File input cleared by the user.");
+          if(!files.length) return logMessage("File input cleared by the user.");
 
-          warningMessage("Processing... ");
-          createImageBitmap(files[0])
-          .then(bitmap => {
-            warningMessage("bitmap created");
-            const canvas = qs("CANVAS");
-            canvas.width = bitmap.width;
-            canvas.height = Math.ceil(bitmap.height * 1334 / 1150);
+          logMessage();
+          readFileAsImage(files[0])
+          .then(imgElem => {
+            logMessage(`Image with resolution ${imgElem.width}x${imgElem.height} is loaded.`);
+            let width, height, bottomHeight;
+            const ratio = imgElem.width / imgElem.height;
+            if(imgElem.width < 750 || imgElem.height < 1150) {
+              width = imgElem.width;
+              height = imgElem.height;
+              bottomHeight = Math.floor(184 * ((ratio < 750 / 1150) ? (width / 750) : (height / 1150)));
+              logMessage(`Adding ${bottomHeight}px height to bottom.`);
+            }
+            else {
+              if(ratio < 750 / 1150) {
+                width = 750;
+                height = Math.floor(width / ratio);
+              }
+              else {
+                height = 1150;
+                width = Math.floor(height * ratio);
+              }
+              bottomHeight = 184;
+              logMessage(`Scaling to ${width}x${height} and then add 184px height to bottom.`);
+            }
 
-            warningMessage("copy the image to the canvas");
+            const canvas = document.createElement("CANVAS");
+            canvas.width = width;
+            canvas.height = height + bottomHeight;
             const context = canvas.getContext("2d");
-            context.drawImage(bitmap, 0, 0);
+            context.drawImage(imgElem, 0, 0, width, height);
 
-            warningMessage("fill the rest with the average color");
-            const averageColor = getAverageColor(context.getImageData(0, 0, bitmap.width, bitmap.height));
-            context.fillStyle = `rgb(${averageColor[0]}, ${averageColor[1]}, ${averageColor[2]})`;
-            context.fillRect(0, bitmap.height, bitmap.width, canvas.height - bitmap.height);
+            logMessage("Filling the added height with some color.");
+            const imageData = context.getImageData(0, 0, width, height);
+            if(typeof imageData !== "undefined") {
+              const averageColor = getAverageColor(imageData);
+              context.fillStyle = `rgb(${averageColor[0]}, ${averageColor[1]}, ${averageColor[2]})`;
+            }
+            else context.fillStyle = "rgb(0, 0, 0)";
+            context.fillRect(0, height, width, bottomHeight);
 
-            const url = canvas.toDataURL("image/jpeg", 0.8);
-            qs("IMG").src = url;
-            qs("A").href = url;
-            warningMessage("Done!");
+            /**
+             * If the specified quality results in error, then lower the quality and try again.
+             * See https://stackoverflow.com/questions/26152652/ios-html5-canvas-todataurl/26160598#26160598
+             */
+            let url, quality = 0.85;
+            while(typeof url !== "string") {
+              url = canvas.toDataURL("image/jpeg", quality);
+              if(quality < 0.1) return logMessage("Convertion failed.");
+              if(typeof url === "string") break;
+              quality -= 0.05;
+            }
+            logMessage(`Compressed to JPEG with quality ${quality.toPrecision(2)}`);
+
+            qs("IMG#lengthenImage").src = url;
+            qs("A[download]").href = url;
+            logMessage("Done!");
             qs("#result").style.display = "";
+            qs("A[download]").click();
           })
-          .catch(reason => warningMessage(reason));
+          .catch(reason => logMessage(reason));
         });
       });
     </script>
     <style type="text/css">
-      canvas, img {
-        max-width: 45%;
+      #message {
+        white-space: pre-wrap;
+      }
+      #result {
+        margin-top: 2em;
+      }
+      #lengthenImage {
+        max-width: 100%;
+        max-height: 400px;
       }
     </style>
 </head>
 <body>
     <p>選擇一個圖片檔，即會將圖片下方加上空間，以利設定為 iPhone 6, 6s, 7, 8, SE2 的桌布，並使原圖的垂直方向不會被下方的工具列擋到。</p>
     <p>Select an image file, then space is added below the image. Setting the new image as the wallpaper then will not crop the content of the origin image.</p>
-    <input type="file">
-    <div id="message"></div>
-    <div id="result" style="display: none; margin-top: 2em;">
+    <fieldset>
+      <legend>Browse an image from your device</legend>
+      <input type="file">
+      <div id="message"></div>
+    </fieldset>
+    <div id="result" style="display: none;">
       <a download="lengthenHeight.jpeg">下載 Download</a>
       <br>
-      <canvas></canvas>
-      <img>
+      <img id="lengthenImage">
     </div>
 </body>
 </html>
