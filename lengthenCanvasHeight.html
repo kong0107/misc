@@ -1,66 +1,70 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
+
 <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="HandheldFriendly" content="True">
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-    <title>在圖片底部加上額外的色塊 Add extra blank to bottom of an image</title>
-    <script type="text/javascript">
-      function qs(q) {
-        return document.querySelector(q);
-      }
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="HandheldFriendly" content="True">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <title>在圖片底部加上額外的色塊 Add extra blank to bottom of an image</title>
+  <script type="text/javascript">
+    function qs(q) {
+      return document.querySelector(q);
+    }
 
-      function logMessage(msg = "") {
-        qs("#result").style.display = "none";
-        if(msg) {
-          qs("#message").textContent += msg + "\n";
-          console.log(msg);
-        }
-        else qs("#message").textContent = "";
+    function logMessage(msg = "") {
+      qs("#result").style.display = "none";
+      if (msg) {
+        qs("#message").textContent += msg + "\n";
+        console.log(msg);
       }
+      else qs("#message").textContent = "";
+    }
 
-      function getAverageColor(imageData) {
-        const sumRGBA = imageData.data.reduce((acc, cur, index) => {
-          acc[index % 4] += cur;
-          return acc;
-        }, [0, 0, 0, 0]);
-        return sumRGBA.map(sum => Math.floor(sum / (imageData.width * imageData.height)));
-      }
+    function getAverageColor(imageData) {
+      const black = [0, 0, 0, 0];
+      if (typeof imageData === "undfeined" || !(imageData.data instanceof Uint8ClampedArray))
+        return black;
+      const sumRGBA = imageData.data.reduce((acc, cur, index) => {
+        acc[index % 4] += cur;
+        return acc;
+      }, black);
+      return sumRGBA.map(sum => Math.floor(sum / (imageData.width * imageData.height)));
+    }
 
-      function readFileAsImage(file) {
-        const reader = new FileReader();
-        return new Promise((resolve, reject) => {
-          reader.addEventListener("load", () => {
-            const imgElem = new Image();
-            imgElem.addEventListener("load", () => resolve(imgElem));
-            imgElem.addEventListener("error", () => reject("The source image could not be decoded."));
-            imgElem.src = reader.result;
-          });
-          reader.addEventListener("error", () => reject(reader.error));
-          reader.readAsDataURL(file);
+    function readFileAsImage(file) {
+      const reader = new FileReader();
+      return new Promise((resolve, reject) => {
+        reader.addEventListener("load", () => {
+          const imgElem = new Image();
+          imgElem.addEventListener("load", () => resolve(imgElem));
+          imgElem.addEventListener("error", () => reject("The source image could not be decoded."));
+          imgElem.src = reader.result;
         });
-      };
+        reader.addEventListener("error", () => reject(reader.error));
+        reader.readAsDataURL(file);
+      });
+    };
 
-      window.addEventListener("load", () => {
-        qs("input[type=file]").addEventListener("change", event => {
-          const files = event.target.files;
-          if(!files.length) return logMessage("File input cleared by the user.");
+    window.addEventListener("load", () => {
+      qs("input[type=file]").addEventListener("change", event => {
+        const files = event.target.files;
+        if (!files.length) return logMessage("File input cleared by the user.");
 
-          logMessage();
-          readFileAsImage(files[0])
+        logMessage();
+        readFileAsImage(files[0])
           .then(imgElem => {
             logMessage(`Image with resolution ${imgElem.width}x${imgElem.height} is loaded.`);
             let width, height, bottomHeight;
             const ratio = imgElem.width / imgElem.height;
-            if(imgElem.width < 750 || imgElem.height < 1150) {
+            if (imgElem.width < 750 || imgElem.height < 1150) {
               width = imgElem.width;
               height = imgElem.height;
               bottomHeight = Math.floor(184 * ((ratio < 750 / 1150) ? (width / 750) : (height / 1150)));
               logMessage(`Adding ${bottomHeight}px height to bottom.`);
             }
             else {
-              if(ratio < 750 / 1150) {
+              if (ratio < 750 / 1150) {
                 width = 750;
                 height = Math.floor(width / ratio);
               }
@@ -78,13 +82,10 @@
             const context = canvas.getContext("2d");
             context.drawImage(imgElem, 0, 0, width, height);
 
-            logMessage("Filling the added height with some color.");
+            logMessage("Filling the added height with average color, or black if error occurs.");
             const imageData = context.getImageData(0, 0, width, height);
-            if(typeof imageData !== "undefined") {
-              const averageColor = getAverageColor(imageData);
-              context.fillStyle = `rgb(${averageColor[0]}, ${averageColor[1]}, ${averageColor[2]})`;
-            }
-            else context.fillStyle = "rgb(0, 0, 0)";
+            const averageColor = getAverageColor(imageData);
+            context.fillStyle = `rgb(${averageColor[0]}, ${averageColor[1]}, ${averageColor[2]})`;
             context.fillRect(0, height, width, bottomHeight);
 
             /**
@@ -92,10 +93,10 @@
              * See https://stackoverflow.com/questions/26152652/ios-html5-canvas-todataurl/26160598#26160598
              */
             let url, quality = 0.85;
-            while(typeof url !== "string") {
+            while (typeof url !== "string") {
               url = canvas.toDataURL("image/jpeg", quality);
-              if(quality < 0.1) return logMessage("Convertion failed.");
-              if(typeof url === "string") break;
+              if (quality < 0.1) return logMessage("Convertion failed.");
+              if (typeof url === "string") break;
               quality -= 0.05;
             }
             logMessage(`Compressed to JPEG with quality ${quality.toPrecision(2)}`);
@@ -107,25 +108,29 @@
             //qs("A[download]").click();
           })
           .catch(reason => logMessage(reason));
-        });
       });
-    </script>
-    <style type="text/css">
-      #message {
-        white-space: pre-wrap;
-      }
-      #result {
-        margin-top: 2em;
-      }
-      #lengthenImage {
-        max-width: 100%;
-        max-height: 400px;
-      }
-      h1 {
-        font-size: 24px;
-      }
-    </style>
+    });
+  </script>
+  <style type="text/css">
+    #message {
+      white-space: pre-wrap;
+    }
+
+    #result {
+      margin-top: 2em;
+    }
+
+    #lengthenImage {
+      max-width: 100%;
+      max-height: 400px;
+    }
+
+    h1 {
+      font-size: 24px;
+    }
+  </style>
 </head>
+
 <body>
   <h1>
     <div lang="zh-TW">在圖片底部加上額外的色塊</div>
@@ -136,7 +141,8 @@
     選擇一個圖片檔，即會將圖片下方加上空間，以利設定為 iPhone 6, 6s, 7, 8, SE2 的桌布，並使原圖的垂直方向不會被下方的工具列擋到。
   </p>
   <p lang="en-US">
-    Have you ever changed your wallpaper to an image you like, and the bottom part turned to be blurred by the dock in iOS?
+    Have you ever changed your wallpaper to an image you like,
+    and the bottom part turned to be blurred by the dock in iOS?
     Select an image file, then space is added below the image.
     Setting the new image as the wallpaper then will not crop the content of the origin image.
   </p>
@@ -151,4 +157,5 @@
     <img id="lengthenImage">
   </div>
 </body>
+
 </html>
