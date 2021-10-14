@@ -6,7 +6,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sort Images for Print</title>
     <style type="text/css">
+        :root {
+            counter-reset: pager;
+        }
         @media screen {
+            [type=file] {
+                display: block;
+                margin-bottom: 1em;
+            }
+            [type=checkbox] {
+                position: relative;
+            }
+            [type=checkbox]::after {
+                content: "顯示頁碼";
+                position: absolute;
+                left: 1em;
+                width: 5em;
+                top: -.2em;
+            }
             img {
                 max-width: 80vw;
                 max-height: 30vh;
@@ -19,27 +36,51 @@
             }
         }
         @media print {
-            h1, input, div {
+            * {
+                margin: 0;
+                padding: 0;
+            }
+            h1, input, .control-panel {
                 display: none;
             }
-            ol {
+            li {
                 list-style-type: none;
+                height: 100vh;
+                position: relative;
+                font-size: 24px;
             }
             li:not(:first-child) {
                 page-break-before: always;
             }
             img {
                 max-width: 100vw;
-                max-height: 100vh;
+                max-height: 100%;
+                width: 100vw;
+                object-fit: contain;
+                margin: 0 auto;
+                display: block;
+            }
+
+            [type=checkbox]:checked ~ ol li::after {
+                counter-increment: pager;
+                content: counter(pager);
+                position: absolute;
+                right: 0;
+                bottom: 0;
+                width: 100vw;
+                text-align: center;
+            }
+            [type=checkbox]:checked ~ ol li img {
+                max-height: calc(100% - 1.5em);
             }
         }
     </style>
     <script>
+        console.debug("To do: 更方便的替換順序");
         const d = document;
         const q = d.querySelector.bind(d);
         const e = d.createElement.bind(d);
         d.addEventListener("DOMContentLoaded", () => {
-            window.fileInput = d.querySelector("[type=file]");
             q("[type=file]").addEventListener("change", event => {
                 const files = event.target.files;
                 const container = q("ol");
@@ -50,6 +91,7 @@
                     const listItem = e("li");
 
                     const controlPanel = e("div");
+                    controlPanel.className = "control-panel";
 
                     const btnMoveUp = e("button");
                     btnMoveUp.className = "btn-move-up";
@@ -87,6 +129,7 @@
 <body>
     <h1>Sort Images for Print</h1>
     <input type="file" multiple>
+    <input type="checkbox">
     <ol></ol>
 </body>
 </html>
