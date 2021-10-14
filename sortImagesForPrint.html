@@ -10,9 +10,19 @@
             counter-reset: pager;
         }
         @media screen {
+            h1 {
+                margin-top: 0;
+            }
+            label {
+                display: inline-block;
+                padding: .2em .3em;
+                border: 1px solid gray;
+                border-radius: .2em;
+                background-color: #eee;
+                cursor: pointer;
+            }
             [type=file] {
-                display: block;
-                margin-bottom: 1em;
+                display: none;
             }
             [type=checkbox] {
                 position: relative;
@@ -80,14 +90,15 @@
         const d = document;
         const q = d.querySelector.bind(d);
         const e = d.createElement.bind(d);
+
+        function setClearButtonDisplay() {
+            q("#btn-clear").style.display = q("ol").childElementCount ? "" : "none";
+        }
+
         d.addEventListener("DOMContentLoaded", () => {
             q("[type=file]").addEventListener("change", event => {
-                const files = event.target.files;
                 const container = q("ol");
-                container.textContent = "";
-
                 for(const file of event.target.files) {
-                    console.debug(file);
                     const listItem = e("li");
 
                     const controlPanel = e("div");
@@ -113,6 +124,7 @@
                     btnRemove.textContent = "×";
                     btnRemove.addEventListener("click", () => {
                         listItem.remove();
+                        setClearButtonDisplay();
                     });
 
                     const image = e("img");
@@ -122,13 +134,27 @@
                     listItem.append(controlPanel, image);
                     container.appendChild(listItem);
                 }
+
+                event.target.value = "";
+                setClearButtonDisplay();
             });
+
+            q("#btn-clear").addEventListener("click", () => {
+                q("ol").textContent = "";
+                setClearButtonDisplay();
+            });
+
+            setClearButtonDisplay();
         });
     </script>
 </head>
 <body>
     <h1>Sort Images for Print</h1>
-    <input type="file" multiple>
+    <div class="control-panel">
+        <input id="input-file" type="file" multiple>
+        <label id="btn-add" for="input-file">+ Add Images</label>
+        <label id="btn-clear">⎚ Clear List</label>
+    </div>
     <input type="checkbox">
     <ol></ol>
 </body>
