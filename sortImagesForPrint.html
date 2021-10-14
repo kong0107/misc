@@ -8,10 +8,17 @@
     <style type="text/css">
         :root {
             counter-reset: pager;
+            scroll-behavior: smooth;
         }
         @media screen {
+            body > header {
+                position: sticky;
+                top: 0;
+                background: linear-gradient(#fff, #ffffff00);
+            }
             h1 {
-                margin-top: 0;
+                margin: 0;
+                cursor: pointer;
             }
             label {
                 display: inline-block;
@@ -34,15 +41,26 @@
                 width: 5em;
                 top: -.2em;
             }
-            img {
-                max-width: 80vw;
-                max-height: 30vh;
+
+            .justify-content-between {
+                display: flex;
+                justify-content: space-between;
             }
-            li:first-child .btn-move-up,
-            li:last-child .btn-move-down {
-                border-color: transparent;
-                color: transparent;
-                background-color: transparent;
+            ol li {
+                width: 400px;
+                border-bottom: 1px dashed gray;
+                padding-bottom: .5em;
+                margin-bottom: .5em;
+            }
+            ol li:first-child .btn-move-top,
+            ol li:first-child .btn-move-up,
+            ol li:last-child .btn-move-down,
+            ol li:last-child .btn-move-bottom {
+                visibility: hidden;
+            }
+            img {
+                max-width: 100%;
+                max-height: 30vh;
             }
         }
         @media print {
@@ -50,7 +68,7 @@
                 margin: 0;
                 padding: 0;
             }
-            header, footer, input, .control-panel {
+            header, footer, input {
                 display: none;
             }
             li {
@@ -86,86 +104,105 @@
         }
     </style>
     <script>
-        /// To do: 更方便的替換順序
-        const d = document;
-        const q = d.querySelector.bind(d);
-        const e = d.createElement.bind(d);
+        const qs = document.querySelector.bind(document);
 
         function checkListEmptiness() {
-            const display = q("ol").childElementCount ? "" : "none";
-            q("#btn-sort").style.display = display;
-            q("#btn-clear").style.display = display;
+            const display = qs("ol").childElementCount ? "" : "none";
+            qs("#btn-sort").style.display = display;
+            qs("#btn-clear").style.display = display;
         }
 
-        d.addEventListener("DOMContentLoaded", () => {
-            q("[type=file]").addEventListener("change", event => {
-                const container = q("ol");
+        function getItem(event) {
+            let target = event.target;
+            while(target.tagName != "LI") target = target.parentNode;
+            return target;
+        }
+        const listeners = {
+            "move-top": event => {
+                const listItem = getItem(event);
+                listItem.parentNode.insertAdjacentElement("afterbegin", listItem);
+            },
+            "move-up": event => {
+                const listItem = getItem(event);
+                const prevSib = listItem.previousSibling;
+                if(prevSib) prevSib.insertAdjacentElement("beforebegin", listItem);
+
+            },
+            "move-down": event => {
+                const listItem = getItem(event);
+                const nextSib = listItem.nextSibling;
+                if(nextSib) nextSib.insertAdjacentElement("afterend", listItem);
+            },
+            "move-bottom": event => {
+                const listItem = getItem(event);
+                listItem.parentNode.insertAdjacentElement("beforeend", listItem);
+            },
+            "remove": event => {
+                getItem(event).remove();
+                checkListEmptiness();
+            }
+        };
+
+        document.addEventListener("DOMContentLoaded", () => {
+            qs("h1").addEventListener("click", () => window.scrollTo(0,0));
+
+            qs("[type=file]").addEventListener("change", event => {
+                const container = qs("ol");
                 for(const file of event.target.files) {
-                    const listItem = e("li");
+                    const listItem = qs("template").content.firstElementChild.cloneNode(true);
+                    listItem.dataset.imageName = file.name;
+                    listItem.querySelector(".txt-name").append(file.name);
 
-                    const controlPanel = e("div");
-                    controlPanel.className = "control-panel";
+                    for(let action in listeners) {
+                        listItem.querySelector(`.btn-${action}`).addEventListener("click", listeners[action]);
+                    }
 
-                    const spanImgName = e("span");
-                    spanImgName.append(d.createTextNode(file.name));
-
-                    const btnMoveUp = e("button");
-                    btnMoveUp.className = "btn-move-up";
-                    btnMoveUp.textContent = "↑";
-                    btnMoveUp.addEventListener("click", () => {
-                        const prevSibling = listItem.previousSibling;
-                        if(prevSibling) container.insertBefore(listItem, prevSibling);
-                    });
-
-                    const btnMoveDown = e("button");
-                    btnMoveDown.className = "btn-move-down";
-                    btnMoveDown.textContent = "↓";
-                    btnMoveDown.addEventListener("click", () => {
-                        const nextSibling = listItem.nextSibling;
-                        if(nextSibling) container.insertBefore(nextSibling, listItem);
-                    });
-
-                    const btnRemove = e("button");
-                    btnRemove.textContent = "×";
-                    btnRemove.addEventListener("click", () => {
-                        listItem.remove();
-                        checkListEmptiness();
-                    });
-
-                    const image = e("img");
-                    image.src = URL.createObjectURL(file);
-
-                    controlPanel.append(btnMoveUp, btnMoveDown, spanImgName, btnRemove);
-                    listItem.append(controlPanel, image);
+                    listItem.querySelector("img").src = URL.createObjectURL(file);
                     container.append(listItem);
                 }
-
                 event.target.value = "";
                 checkListEmptiness();
             });
 
-            q("#btn-print").addEventListener("click", window.print.bind(window));
+            qs("#btn-print").addEventListener("click", window.print.bind(window));
 
-            q("#btn-sort").addEventListener("click", () => {
+            qs("#btn-sort").addEventListener("click", () => {
                 console.debug("sort");
                 const newList =
-                    Array.from(q("ol").children).sort((a, b) => {
-                        const nameA = a.querySelector("span").textContent;
-                        const nameB = b.querySelector("span").textContent;
+                    Array.from(qs("ol").children).sort((a, b) => {
+                        const nameA = a.dataset.imageName;
+                        const nameB = b.dataset.imageName;
                         return nameA.localeCompare(nameB);
                     })
                 ;
-                q("ol").append(...newList);
+                qs("ol").append(...newList);
             });
 
-            q("#btn-clear").addEventListener("click", () => {
-                q("ol").textContent = "";
+            qs("#btn-clear").addEventListener("click", () => {
+                qs("ol").replaceWith(document.createElement("ol"));
                 checkListEmptiness();
             });
 
             checkListEmptiness();
         });
     </script>
+    <template>
+        <li data-image-name>
+            <header>
+                <span class="txt-name"></span>
+                <div class="justify-content-between">
+                    <div>
+                        <button title="move to top"    class="btn-move-top"   >⤒</button>
+                        <button title="move up"        class="btn-move-up"    >↑</button>
+                        <button title="move down"      class="btn-move-down"  >↓</button>
+                        <button title="move to bottom" class="btn-move-bottom">⤓</button>
+                    </div>
+                    <button title="remove item" class="btn-remove">×</button>
+                </div>
+            </header>
+            <img src>
+        </li>
+    </template>
 </head>
 <body>
     <header>
