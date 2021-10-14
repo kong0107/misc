@@ -57,7 +57,7 @@
                 list-style-type: none;
                 height: 100vh;
                 position: relative;
-                font-size: 24px;
+                font-size: 20px;
             }
             li:not(:first-child) {
                 page-break-before: always;
@@ -86,13 +86,15 @@
         }
     </style>
     <script>
-        console.debug("To do: 更方便的替換順序");
+        /// To do: 更方便的替換順序
         const d = document;
         const q = d.querySelector.bind(d);
         const e = d.createElement.bind(d);
 
-        function setClearButtonDisplay() {
-            q("#btn-clear").style.display = q("ol").childElementCount ? "" : "none";
+        function checkListEmptiness() {
+            const display = q("ol").childElementCount ? "" : "none";
+            q("#btn-sort").style.display = display;
+            q("#btn-clear").style.display = display;
         }
 
         d.addEventListener("DOMContentLoaded", () => {
@@ -103,6 +105,9 @@
 
                     const controlPanel = e("div");
                     controlPanel.className = "control-panel";
+
+                    const spanImgName = e("span");
+                    spanImgName.append(d.createTextNode(file.name));
 
                     const btnMoveUp = e("button");
                     btnMoveUp.className = "btn-move-up";
@@ -124,27 +129,41 @@
                     btnRemove.textContent = "×";
                     btnRemove.addEventListener("click", () => {
                         listItem.remove();
-                        setClearButtonDisplay();
+                        checkListEmptiness();
                     });
 
                     const image = e("img");
                     image.src = URL.createObjectURL(file);
 
-                    controlPanel.append(btnMoveUp, btnMoveDown, d.createTextNode(file.name), btnRemove);
+                    controlPanel.append(btnMoveUp, btnMoveDown, spanImgName, btnRemove);
                     listItem.append(controlPanel, image);
-                    container.appendChild(listItem);
+                    container.append(listItem);
                 }
 
                 event.target.value = "";
-                setClearButtonDisplay();
+                checkListEmptiness();
+            });
+
+            q("#btn-print").addEventListener("click", window.print.bind(window));
+
+            q("#btn-sort").addEventListener("click", () => {
+                console.debug("sort");
+                const newList =
+                    Array.from(q("ol").children).sort((a, b) => {
+                        const nameA = a.querySelector("span").textContent;
+                        const nameB = b.querySelector("span").textContent;
+                        return nameA.localeCompare(nameB);
+                    })
+                ;
+                q("ol").append(...newList);
             });
 
             q("#btn-clear").addEventListener("click", () => {
                 q("ol").textContent = "";
-                setClearButtonDisplay();
+                checkListEmptiness();
             });
 
-            setClearButtonDisplay();
+            checkListEmptiness();
         });
     </script>
 </head>
@@ -152,7 +171,9 @@
     <h1>Sort Images for Print</h1>
     <div class="control-panel">
         <input id="input-file" type="file" multiple>
+        <label id="btn-print">⎙ Print</label>
         <label id="btn-add" for="input-file">+ Add Images</label>
+        <label id="btn-sort">↻ Sort by Name</label>
         <label id="btn-clear">⎚ Clear List</label>
     </div>
     <input type="checkbox">
