@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sort Images for Print</title>
+    <style type="text/css">
+        @media screen {
+            img {
+                max-width: 80vw;
+                max-height: 30vh;
+            }
+            li:first-child .btn-move-up,
+            li:last-child .btn-move-down {
+                border-color: transparent;
+                color: transparent;
+                background-color: transparent;
+            }
+        }
+        @media print {
+            h1, input, div {
+                display: none;
+            }
+            ol {
+                list-style-type: none;
+            }
+            li:not(:first-child) {
+                page-break-before: always;
+            }
+            img {
+                max-width: 100vw;
+                max-height: 100vh;
+            }
+        }
+    </style>
+    <script>
+        const d = document;
+        const q = d.querySelector.bind(d);
+        const e = d.createElement.bind(d);
+        d.addEventListener("DOMContentLoaded", () => {
+            window.fileInput = d.querySelector("[type=file]");
+            q("[type=file]").addEventListener("change", event => {
+                const files = event.target.files;
+                const container = q("ol");
+                container.textContent = "";
+
+                for(const file of event.target.files) {
+                    console.debug(file);
+                    const listItem = e("li");
+
+                    const controlPanel = e("div");
+
+                    const btnMoveUp = e("button");
+                    btnMoveUp.className = "btn-move-up";
+                    btnMoveUp.textContent = "↑";
+                    btnMoveUp.addEventListener("click", () => {
+                        const prevSibling = listItem.previousSibling;
+                        if(prevSibling) container.insertBefore(listItem, prevSibling);
+                    });
+
+                    const btnMoveDown = e("button");
+                    btnMoveDown.className = "btn-move-down";
+                    btnMoveDown.textContent = "↓";
+                    btnMoveDown.addEventListener("click", () => {
+                        const nextSibling = listItem.nextSibling;
+                        if(nextSibling) container.insertBefore(nextSibling, listItem);
+                    });
+
+                    const btnRemove = e("button");
+                    btnRemove.textContent = "×";
+                    btnRemove.addEventListener("click", () => {
+                        listItem.remove();
+                    });
+
+                    const image = e("img");
+                    image.src = URL.createObjectURL(file);
+
+                    controlPanel.append(btnMoveUp, btnMoveDown, d.createTextNode(file.name), btnRemove);
+                    listItem.append(controlPanel, image);
+                    container.appendChild(listItem);
+                }
+            });
+        });
+    </script>
+</head>
+<body>
+    <h1>Sort Images for Print</h1>
+    <input type="file" multiple>
+    <ol></ol>
+</body>
+</html>
