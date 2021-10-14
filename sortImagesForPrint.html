@@ -30,7 +30,7 @@
             [type=checkbox]::after {
                 content: "顯示頁碼";
                 position: absolute;
-                left: 1em;
+                left: 1.5em;
                 width: 5em;
                 top: -.2em;
             }
@@ -50,7 +50,7 @@
                 margin: 0;
                 padding: 0;
             }
-            h1, input, .control-panel {
+            header, footer, input, .control-panel {
                 display: none;
             }
             li {
@@ -168,15 +168,29 @@
     </script>
 </head>
 <body>
-    <h1>Sort Images for Print</h1>
-    <div class="control-panel">
+    <header>
+        <h1>Sort Images for Print</h1>
+
         <input id="input-file" type="file" multiple>
         <label id="btn-print">⎙ Print</label>
         <label id="btn-add" for="input-file">+ Add Images</label>
         <label id="btn-sort">↻ Sort by Name</label>
         <label id="btn-clear">⎚ Clear List</label>
-    </div>
+    </header>
+
     <input type="checkbox">
     <ol></ol>
+
+    <footer>
+        <ul>
+            <li>Only for PC browsers.</li>
+            <li>列印時不會出現控制元件和說明文字。</li>
+            <li>只在使用者電腦執行，圖片「不會」傳到網路上。</li>
+            <li>可手動調整排序，也可依檔名排列。</li>
+            <li>每頁只會有一張圖片。水平置中，但垂直置頂。</li>
+            <li>圖片會等比例放大/縮小，到恰好滿足頁面高度或寬度（仍有頁面邊框）而不被裁切。</li>
+            <li>可顯示或隱藏底部頁碼。</li>
+        </ul>
+    </footer>
 </body>
 </html>
