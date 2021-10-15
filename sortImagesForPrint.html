@@ -10,11 +10,15 @@
             counter-reset: pager;
             scroll-behavior: smooth;
         }
+        .d-none {
+            display: none;
+        }
         @media screen {
             body > header {
                 position: sticky;
                 top: 0;
-                background: linear-gradient(#fff, #ffffff00);
+                background: linear-gradient(#fff, #fff 25%, #ffffff80 90%, #ffffff00 100%);
+                padding-bottom: .5em;
             }
             h1 {
                 margin: 0;
@@ -22,14 +26,13 @@
             }
             label {
                 display: inline-block;
+                margin: .2em .1em;
                 padding: .2em .3em;
+                height: 1.3em;
                 border: 1px solid gray;
                 border-radius: .2em;
                 background-color: #eee;
                 cursor: pointer;
-            }
-            [type=file] {
-                display: none;
             }
             [type=checkbox] {
                 position: relative;
@@ -105,11 +108,11 @@
     </style>
     <script>
         const qs = document.querySelector.bind(document);
+        const qsa = document.querySelectorAll.bind(document);
 
         function checkListEmptiness() {
             const display = qs("ol").childElementCount ? "" : "none";
-            qs("#btn-sort").style.display = display;
-            qs("#btn-clear").style.display = display;
+            qsa(".hide-if-no-img").forEach(elem => elem.style.display = display);
         }
 
         function getItem(event) {
@@ -117,7 +120,7 @@
             while(target.tagName != "LI") target = target.parentNode;
             return target;
         }
-        const listeners = {
+        const itemBtnFuncs = {
             "move-top": event => {
                 const listItem = getItem(event);
                 listItem.parentNode.insertAdjacentElement("afterbegin", listItem);
@@ -143,6 +146,39 @@
             }
         };
 
+        const btnFuncs = {
+            "sort": () => {
+                const newList =
+                    Array.from(qs("ol").children).sort((a, b) => {
+                        const nameA = a.dataset.imageName;
+                        const nameB = b.dataset.imageName;
+                        return nameA.localeCompare(nameB);
+                    })
+                ;
+                qs("ol").append(...newList);
+            },
+            "clear": () => {
+                qs("ol").replaceWith(document.createElement("ol"));
+                checkListEmptiness();
+            },
+            "print": () => {
+                window.print();
+            },
+            "download": () => {
+                console.debug("download");
+                let scriptElem = qs("#jspdf");
+                if(!scriptElem) {
+                    scriptElem = document.createElement("script");
+                    scriptElem.id = "jspdf";
+                    scriptElem.src = "https://unpkg.com/jspdf@latest/dist/jspdf.umd.min.js";
+                    scriptElem.addEventListener("load", () => console.debug("jsPDF loaded"));
+                    document.head.append(scriptElem);
+                    return;
+                }
+                if(typeof jsPDF !== "function") return console.warn("not defined yet");
+            }
+        };
+
         document.addEventListener("DOMContentLoaded", () => {
             qs("h1").addEventListener("click", () => window.scrollTo(0,0));
 
@@ -153,8 +189,9 @@
                     listItem.dataset.imageName = file.name;
                     listItem.querySelector(".txt-name").append(file.name);
 
-                    for(let action in listeners) {
-                        listItem.querySelector(`.btn-${action}`).addEventListener("click", listeners[action]);
+                    for(const cmd in itemBtnFuncs) {
+                        listItem.querySelector(`.btn-${cmd}`)
+                        .addEventListener("click", itemBtnFuncs[cmd]);
                     }
 
                     listItem.querySelector("img").src = URL.createObjectURL(file);
@@ -164,24 +201,11 @@
                 checkListEmptiness();
             });
 
-            qs("#btn-print").addEventListener("click", window.print.bind(window));
-
-            qs("#btn-sort").addEventListener("click", () => {
-                console.debug("sort");
-                const newList =
-                    Array.from(qs("ol").children).sort((a, b) => {
-                        const nameA = a.dataset.imageName;
-                        const nameB = b.dataset.imageName;
-                        return nameA.localeCompare(nameB);
-                    })
-                ;
-                qs("ol").append(...newList);
-            });
-
-            qs("#btn-clear").addEventListener("click", () => {
-                qs("ol").replaceWith(document.createElement("ol"));
-                checkListEmptiness();
-            });
+            for(const cmd in btnFuncs) {
+                qsa(`.btn-${cmd}`).forEach(
+                    elem => elem.addEventListener("click", btnFuncs[cmd])
+                );
+            }
 
             checkListEmptiness();
         });
@@ -207,12 +231,16 @@
 <body>
     <header>
         <h1>Sort Images for Print</h1>
-
-        <input id="input-file" type="file" multiple>
-        <label id="btn-print">⎙ Print</label>
-        <label id="btn-add" for="input-file">+ Add Images</label>
-        <label id="btn-sort">↻ Sort by Name</label>
-        <label id="btn-clear">⎚ Clear List</label>
+        <input id="input-file" type="file" multiple class="d-none">
+        <div>
+            <label class="btn-add" for="input-file">+ Add Images</label>
+            <label class="btn-sort hide-if-no-img">↻ Sort by Name</label>
+            <label class="btn-clear hide-if-no-img">⎚ Clear List</label>
+        </div>
+        <div class="hide-if-no-img">
+            <label class="btn-print">⎙ Print</label>
+            <!-- <label class="btn-download">⤋ Download PDF</label> -->
+        </div>
     </header>
 
     <input type="checkbox">
