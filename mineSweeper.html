@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MineSweeper</title>
+    <script>
+        const hash = location.hash.substring(1).split(/&/)
+        .reduce((acc, cur) => Object.assign(acc, Object.fromEntries([cur.split("=")])), {});
+
+        var gameStarted = false;
+        var rows = 9, cols = 9, mines = 10;
+        document.addEventListener("DOMContentLoaded", () => {
+            ["rows", "cols", "mines"].forEach(key => {
+                const value = parseInt(hash[key], 10);
+                if(!isNaN(value) && value > 1) window[key] = value;
+                document.querySelector(`input[name=${key}]`).value = window[key];
+            });
+            createGame();
+            document.getElementById("btnNewGame").addEventListener("click", createGame);
+        });
+
+        function createGame() {
+            ["rows", "cols", "mines"].forEach(key => {
+                window[key] = parseInt(document.querySelector(`input[name=${key}]`).value);
+            });
+            if(mines >= rows * cols - 1) mines = rows * cols - 2;
+            location.hash = `#rows=${rows}&cols=${cols}&mines=${mines}`;
+
+            const game = document.getElementById("game");
+            game.firstChild.remove();
+            tbody = document.createElement("tbody");
+            game.append(tbody);
+
+            for(let r = 0; r < rows; ++r) {
+                const tr = document.createElement("tr");
+                for(let c = 0; c < cols; ++c) {
+                    const td = document.createElement("td");
+                    td.dataset.adjMineCount = 0;
+                    td.classList.add("covered");
+                    td.addEventListener("click", event => sweep(event.target), {once: true});
+                    tr.append(td);
+
+                    td.adjacentCells = [];
+                    if(r !== 0) {
+                        const upperCell = tbody.childNodes[r - 1].childNodes[c];
+                        if(c !== 0) td.adjacentCells.push(upperCell.previousSibling);
+                        td.adjacentCells.push(upperCell);
+                        if(c !== cols - 1) td.adjacentCells.push(upperCell.nextSibling);
+                    }
+                    if(c !== 0) td.adjacentCells.push(td.previousSibling);
+                    td.adjacentCells.forEach(cell => cell.adjacentCells.push(td));
+                }
+                tbody.append(tr);
+            }
+            gameStarted = false;
+        }
+
+        function startGame(clickedCell) {
+            if(gameStarted) return;
+            const mineLocations = [];
+            const cells = tbody.querySelectorAll("td");
+
+            /**
+             * 1. Make a copy of the array of cells.
+             * 2. Randomly select one cell to set a mine and then remove the cell from the copy.
+             * 3. Increase the counter around the cell.
+             * 4. Repeat from step 2 until there are enough mines.
+             */
+            const tmpArr = Array.from(cells);
+            tmpArr.splice(tmpArr.indexOf(clickedCell), 1); ///< clickedCell should not be a mine.
+            for(let m = 0; m < mines; ++m) {
+                const rndIndex = Math.floor(Math.random() * tmpArr.length);
+                const mine = tmpArr[rndIndex];
+                tmpArr.splice(rndIndex, 1);
+
+                mine.dataset.isMine = true;
+                mine.append("x");
+                mine.adjacentCells.forEach(cell => cell.dataset.adjMineCount++);
+            }
+            Array.from(cells).forEach(cell => {
+                if(!cell.dataset.isMine) {
+                    cell.append(cell.dataset.adjMineCount);
+                }
+            });
+
+            gameStarted = true;
+        }
+
+        function sweep(target) {
+            if(!gameStarted) startGame(target);
+            target.classList.remove("covered");
+            if(target.dataset.isMine) {
+                // BOOM!
+                return;
+            }
+            if(target.dataset.adjMineCount == "0") {
+                target.adjacentCells.forEach(cell => {
+                    if(cell.classList.contains("covered")) sweep(cell);
+                });
+            }
+        }
+    </script>
+    <style>
+        table#game {
+            margin: 1rem 0;
+        }
+
+        #game td {
+            height: 2rem;
+            width: 2rem;
+            text-align: center;
+            border: 1px solid #ccc;
+        }
+
+        #game td.covered {
+            font-size: 0;
+        }
+    </style>
+</head>
+<body>
+    <form>
+        <dl>
+            <dt>Rows</dt>
+            <dd><input type="number" name="rows" min="3" step="1"></dd>
+        </dl>
+        <dl>
+            <dt>Columns</dt>
+            <dd><input type="number" name="cols" min="3" step="1"></dd>
+        </dl>
+        <dl>
+            <dt>Mines</dt>
+            <dd><input type="number" name="mines" step="1"></dd>
+        </dl>
+        <button id="btnNewGame">New Game</button>
+    </form>
+    <table id="game"><tbody></tbody></table>
+    <button id="btnSurrender">Surrender</button>
+</body>
+</html>
