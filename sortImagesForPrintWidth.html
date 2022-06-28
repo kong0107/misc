@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sort Images for Print</title>
+    <style type="text/css">
+        :root {
+            counter-reset: pager;
+            scroll-behavior: smooth;
+        }
+        .d-none {
+            display: none;
+        }
+        @media screen {
+            body > header {
+                position: sticky;
+                top: 0;
+                background: linear-gradient(#fff, #fff 25%, #ffffff80 90%, #ffffff00 100%);
+                padding-bottom: .5em;
+            }
+            h1 {
+                margin: 0;
+                cursor: pointer;
+            }
+            label {
+                display: inline-block;
+                margin: .2em .1em;
+                padding: .2em .3em;
+                height: 1.3em;
+                border: 1px solid gray;
+                border-radius: .2em;
+                background-color: #eee;
+                cursor: pointer;
+            }
+
+            .justify-content-between {
+                display: flex;
+                justify-content: space-between;
+            }
+            ol li {
+                width: 400px;
+                border-bottom: 1px dashed gray;
+                padding-bottom: .5em;
+                margin-bottom: .5em;
+            }
+            ol li:first-child .btn-move-top,
+            ol li:first-child .btn-move-up,
+            ol li:last-child .btn-move-down,
+            ol li:last-child .btn-move-bottom {
+                visibility: hidden;
+            }
+            img {
+                max-width: 100%;
+                max-height: 30vh;
+            }
+        }
+        @media print {
+            * {
+                margin: 0;
+                padding: 0;
+            }
+            header, footer, input {
+                display: none;
+            }
+            li {
+                list-style-type: none;
+                position: relative;
+                font-size: 20px;
+            }
+            li:not(:first-child) {
+                page-break-before: always;
+            }
+            img {
+                max-width: 100vw;
+                object-fit: contain;
+                margin: 0 auto;
+                display: block;
+            }
+
+        }
+    </style>
+    <style id="widthCSS" type="text/css"></style>
+    <script>
+        const qs = document.querySelector.bind(document);
+        const qsa = document.querySelectorAll.bind(document);
+
+        function checkListEmptiness() {
+            const display = qs("ol").childElementCount ? "" : "none";
+            qsa(".hide-if-no-img").forEach(elem => elem.style.display = display);
+        }
+
+        function getItem(event) {
+            let target = event.target;
+            while(target.tagName != "LI") target = target.parentNode;
+            return target;
+        }
+        const itemBtnFuncs = {
+            "move-top": event => {
+                const listItem = getItem(event);
+                listItem.parentNode.insertAdjacentElement("afterbegin", listItem);
+            },
+            "move-up": event => {
+                const listItem = getItem(event);
+                const prevSib = listItem.previousSibling;
+                if(prevSib) prevSib.insertAdjacentElement("beforebegin", listItem);
+
+            },
+            "move-down": event => {
+                const listItem = getItem(event);
+                const nextSib = listItem.nextSibling;
+                if(nextSib) nextSib.insertAdjacentElement("afterend", listItem);
+            },
+            "move-bottom": event => {
+                const listItem = getItem(event);
+                listItem.parentNode.insertAdjacentElement("beforeend", listItem);
+            },
+            "remove": event => {
+                getItem(event).remove();
+                checkListEmptiness();
+            }
+        };
+
+        const btnFuncs = {
+            "sort": () => {
+                const newList =
+                    Array.from(qs("ol").children).sort((a, b) => {
+                        const nameA = a.dataset.imageName;
+                        const nameB = b.dataset.imageName;
+                        return nameA.localeCompare(nameB);
+                    })
+                ;
+                qs("ol").append(...newList);
+            },
+            "clear": () => {
+                qs("ol").replaceWith(document.createElement("ol"));
+                checkListEmptiness();
+            },
+            "print": () => {
+                window.print();
+            },
+            "download": () => {
+                console.debug("download");
+                let scriptElem = qs("#jspdf");
+                if(!scriptElem) {
+                    scriptElem = document.createElement("script");
+                    scriptElem.id = "jspdf";
+                    scriptElem.src = "https://unpkg.com/jspdf@latest/dist/jspdf.umd.min.js";
+                    scriptElem.addEventListener("load", () => console.debug("jsPDF loaded"));
+                    document.head.append(scriptElem);
+                    return;
+                }
+                if(typeof jsPDF !== "function") return console.warn("not defined yet");
+            }
+        };
+
+        document.addEventListener("DOMContentLoaded", () => {
+            qs("h1").addEventListener("click", () => window.scrollTo(0,0));
+
+            qs("[type=file]").addEventListener("change", event => {
+                const container = qs("ol");
+                for(const file of event.target.files) {
+                    const listItem = qs("template").content.firstElementChild.cloneNode(true);
+                    listItem.dataset.imageName = file.name;
+                    listItem.querySelector(".txt-name").append(file.name);
+
+                    for(const cmd in itemBtnFuncs) {
+                        listItem.querySelector(`.btn-${cmd}`)
+                        .addEventListener("click", itemBtnFuncs[cmd]);
+                    }
+
+                    listItem.querySelector("img").src = URL.createObjectURL(file);
+                    container.append(listItem);
+                }
+                event.target.value = "";
+                checkListEmptiness();
+            });
+
+            qs("[type=range]").addEventListener("input", event => {
+                const width = event.target.value;
+                qs("#widthDisplay").textContent = width;
+                qs("#widthCSS").textContent = `@media print { img { width: ${width}vw;} }`;
+            });
+            qs("[type=range]").dispatchEvent(new Event("input"));
+
+            for(const cmd in btnFuncs) {
+                qsa(`.btn-${cmd}`).forEach(
+                    elem => elem.addEventListener("click", btnFuncs[cmd])
+                );
+            }
+
+            checkListEmptiness();
+        });
+    </script>
+    <template>
+        <li data-image-name>
+            <header>
+                <span class="txt-name"></span>
+                <div class="justify-content-between">
+                    <div>
+                        <button title="move to top"    class="btn-move-top"   >⤒</button>
+                        <button title="move up"        class="btn-move-up"    >↑</button>
+                        <button title="move down"      class="btn-move-down"  >↓</button>
+                        <button title="move to bottom" class="btn-move-bottom">⤓</button>
+                    </div>
+                    <button title="remove item" class="btn-remove">×</button>
+                </div>
+            </header>
+            <img src>
+        </li>
+    </template>
+</head>
+<body>
+    <header>
+        <h1>Sort Images for Print</h1>
+        <input id="input-file" type="file" multiple class="d-none">
+        <div>
+            <label class="btn-add" for="input-file">+ Add Images</label>
+            <label class="btn-sort hide-if-no-img">↻ Sort by Name</label>
+            <label class="btn-clear hide-if-no-img">⎚ Clear List</label>
+        </div>
+        <div class="hide-if-no-img">
+            <label class="btn-print">⎙ Print</label>
+            <input type="range" min="0" max="100" value="50">
+            Width: <span id="widthDisplay">50</span>%
+        </div>
+    </header>
+
+    <ol></ol>
+
+    <footer>
+        <ul>
+            <li>Only for PC browsers.</li>
+            <li>列印時不會出現控制元件和說明文字。</li>
+            <li>只在使用者電腦執行，圖片「不會」傳到網路上。</li>
+            <li>可手動調整排序，也可依檔名排列。</li>
+            <li>每張圖片會等寬，水平置中。每張圖片之間會換頁。</li>
+            <li>可調整寬度。但數值是可列印範圍的寬度，而非紙張的寬度。</li>
+        </ul>
+    </footer>
+</body>
+</html>
