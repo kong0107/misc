@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Split Image with Overlap</title>
+    <style type="text/css">
+        :root {
+            counter-reset: pager;
+            scroll-behavior: smooth;
+        }
+        body > header {
+            position: sticky;
+            top: 0;
+            background: linear-gradient(#fff, #fff 25%, #ffffff80 90%, #ffffff00 100%);
+            padding-bottom: .5em;
+            z-index: 1;
+        }
+        h1 {
+            margin: 0;
+            cursor: pointer;
+        }
+        img {
+            object-fit: none;
+            display: inline-block;
+            margin-right: 1rem;
+        }
+        dl span {
+            text-align: right;
+            display: inline-block;
+            width: 3em;
+        }
+        [type=range] {
+            max-width: calc(100% - 8rem);
+        }
+        [type=checkbox] {
+            position: relative;
+        }
+
+        [type=checkbox]::after {
+            content: "一頁一圖";
+            position: absolute;
+            left: 1.5em;
+            width: 5em;
+            top: -.2em;
+        }
+        [type=checkbox]:checked ~ main img {
+            display: block;
+            margin: 0 auto 1rem;
+        }
+
+        @media print {
+            header,
+            footer,
+            [type=checkbox] {
+                display: none;
+            }
+            img:not(:first-child) {
+                page-break-before: always;
+            }
+        }
+    </style>
+    <script>
+        const qs = document.querySelector.bind(document);
+        const qsa = document.querySelectorAll.bind(document);
+        function setText(name, text) {
+            document.getElementById(`${name}Text`).textContent = text;
+        }
+        function setDisplay(selector, display = "") {
+            qsa(selector).forEach(elem => elem.style.display = display);
+        }
+
+        var frameSize, overlap;
+        var frameCount;
+        var image = new Image();
+
+        function fileChangeListener(event) {
+            qs("main").replaceChildren();
+            if(image.src) URL.revokeObjectURL(image.src);
+            const file = this.files[0];
+            if(typeof file === "undefined") {
+                image.src = "";
+                setDisplay(".hide-if-no-img", "none");
+                return;
+            }
+            image.src = URL.createObjectURL(file);
+        }
+
+        function imageLoadListener() {
+            setDisplay(".hide-if-no-img");
+            setText("width", image.width);
+            setText("height", image.height);
+            qs("#frameSize").max = image.height;
+            qs("#frameSize").style.cssText = `width: ${image.height / 2}px`;
+            qs("#frameSize").dispatchEvent(new Event("input"));
+        }
+
+        function frameSizeInputListener() {
+            frameSize = parseInt(this.value);
+            setText("frameSize", frameSize);
+            const overlapInputElem = qs("#overlap");
+            overlapInputElem.max = Math.floor(frameSize / 2);
+            overlapInputElem.style.cssText = `width: ${frameSize / 4}px`;
+            overlapInputElem.dispatchEvent(new Event("input"));
+        }
+
+        function overlapInputListener() {
+            overlap = parseInt(this.value);
+            setText("overlap", overlap);
+            setText("fragmentCount", Math.ceil((image.height - overlap) / (frameSize - overlap)));
+            main();
+        }
+
+        function main() {
+            const frags = [];
+            for(let pos = 0; pos <= image.height - overlap; pos += frameSize - overlap) {
+                const frag = new Image();
+                frag.src = image.src;
+                frag.style.cssText = `width: ${image.width}px; height: ${frameSize}px; object-position: 0 -${pos}px;`;
+                frags.push(frag);
+            }
+            qs("main").replaceChildren(...frags);
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            image.addEventListener("load", imageLoadListener);
+            qs("h1").addEventListener("click", () => window.scrollTo(0,0));
+            qs("[type=file]").addEventListener("change", fileChangeListener);
+            qs("#frameSize").addEventListener("input", frameSizeInputListener);
+            qs("#overlap").addEventListener("input", overlapInputListener);
+            setDisplay(".hide-if-no-img", "none");
+        });
+    </script>
+</head>
+<body>
+    <header>
+        <h1>Split Image with Overlap</h1>
+        <input type="file">
+        <div class="hide-if-no-img">
+            <div>
+                Image Size:
+                <span id="widthText"></span>
+                &Cross;
+                <span id="heightText"></span>
+            </div>
+            <dl>
+                <dt title="height of each fragments">Frame Size:</dt>
+                <dd>
+                    <span id="frameSizeText"></span>
+                    <input id="frameSize" type="range" min="100" max="1000" value="600">
+                </dd>
+            </dl>
+            <dl>
+                <dt title="adjacent fragments have some same part">Overlap:</dt>
+                <dd>
+                    <span id="overlapText"></span>
+                    <input id="overlap" type="range" min="0" value="50">
+                </dd>
+            </dl>
+            <div>
+                Fragments:
+                <span id="fragmentCountText"></span>
+            </div>
+        </div>
+    </header>
+    <input type="checkbox" class="hide-if-no-img">
+    <main></main>
+    <footer class="hide-if-no-img">
+        <ul>
+            <li>圖片仍可能被瀏覽器裁切與分頁，請務必確認預覽列印是否正確。</li>
+            <li>滑鼠無法操作至需要的數值時，可用方向鍵。</li>
+            <li>圖片本身過寬時，列印時會等比例縮為與頁面等寬。</li>
+            <li>圖片不夠寬時，不會放大。若圖片寬度未達頁面一半，且未勾選「一頁一圖」時，一頁會有兩張圖以上。</li>
+        </ul>
+    </footer>
+</body>
+</html>
