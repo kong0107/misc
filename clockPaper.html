@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clock Paper</title>
+    <style>
+        body {
+            background-color: darkolivegreen;
+        }
+    </style>
+    <script>
+        const qs = document.querySelector.bind(document);
+        const romanNumerics = "0ⅠⅡⅢⅣⅤⅥⅦⅧⅨⅩⅪⅫ";
+
+        const dpi = 150;
+        const radius = 3.75 * dpi;
+        const size = 2 * radius + 8;
+        const sizeH = size * .5;
+        const fontSize = 120;
+        const numberCenterRadius = radius - fontSize * .5;
+        const dotCircleRadius = 2.25 * dpi;
+        function drawCanvas(canvas) {
+            canvas.width = canvas.height = size;
+            const ctx = canvas.getContext("2d");
+
+            ctx.beginPath();
+            ctx.arc(sizeH, sizeH, radius, 0, 2 * Math.PI);
+            ctx.lineTo(size, sizeH);
+            ctx.lineTo(size,   0);
+            ctx.lineTo(   0,   0);
+            ctx.lineTo(   0, size);
+            ctx.lineTo(size, size);
+            ctx.lineTo(size, sizeH);
+            ctx.fillStyle = "white";
+            ctx.fill();
+
+
+            ctx.beginPath();
+            ctx.arc(sizeH, sizeH, radius, 0, 2 * Math.PI);
+            ctx.strokeStyle = "gray";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(sizeH, sizeH, .2 * dpi, 0, 2 * Math.PI);
+            ctx.fillStyle = "gray";
+            ctx.fill();
+
+            ctx.font = fontSize + "px \"Agency FB\"";
+            ctx.textAlign = "center";
+            ctx.fillStyle = "black";
+            for(let i = 1; i <= 12; ++i) {
+                const x = sizeH - numberCenterRadius * Math.sin(Math.PI * (i - 6) / 6);
+                const y = sizeH + numberCenterRadius * Math.cos(Math.PI * (i - 6) / 6);
+
+                const string = i.toString(10);
+                // const string = romanNumerics.charAt(i);
+                const metrics = ctx.measureText(string);
+                ctx.fillText(string, x, y + (metrics.actualBoundingBoxAscent - metrics.actualBoundingBoxDescent) / 2);
+            }
+
+            for(let d = 0; d < 60; ++d) {
+                let dotRadius = 2;
+                ctx.fillStyle = "gray";
+                if(d % 5 === 0) {
+                    dotRadius = 3;
+                    ctx.fillStyle = "black";
+                }
+                const x = sizeH - dotCircleRadius * Math.sin(Math.PI * d / 30);
+                const y = sizeH - dotCircleRadius * Math.cos(Math.PI * d / 30);
+                ctx.beginPath();
+                ctx.arc(x, y, dotRadius, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            drawCanvas(qs("canvas"));
+        });
+    </script>
+</head>
+<body>
+    <header>
+        <h1>Clock Paper</h1>
+    </header>
+    <main>
+        <canvas></canvas>
+    </main>
+</body>
+</html>

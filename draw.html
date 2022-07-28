@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script>
+        document.addEventListener("DOMContentLoaded", () =>
+            drawCanvas(document.querySelector("canvas"))
+        );
+    </script>
+</head>
+<body style="background-color: darkcyan;">
+    <canvas></canvas>
+    <script>
+        const canvasSize = 700;
+        const canvasWidth = 700, canvasHeight = 800;
+        const colors = ["red", "orange", "yellow", "green", "blue", "indigo", "purple"];
+        const funcs = [];
+        funcs.push(x => 150 * Math.cos(x / 300 * Math.PI));
+        // funcs.push(x => Math.abs(x % 600 - 300) - 150);
+        // funcs.push(x => 150 * Math.cos(x / 300 * Math.PI) - Math.abs(x % 600 - 300) + 150);
+        // funcs.push(x => 300 * Math.sin(x / 200) - x % 100 + 50);
+        // funcs.push(x =>  2 * Math.tan(x /  60));
+        // funcs.push(x => ranged(Math.pow((x - 1000) / 20, 2) - 400, -350, 350));
+
+        function mapY(val) { return canvasSize / 2 - val; }
+        function mod(a, n) { return ((a % n) + n) % n; }
+        function ranged(raw, min, max) {
+            const diff = max - min;
+            return Math.abs(mod(raw - max, diff * 2) - diff) + min;
+        }
+
+        function drawCanvas(canvas) {
+// canvas.width = canvas.height = canvasSize;
+canvas.width = canvasWidth;
+canvas.height = canvasHeight;
+const ctx = canvas.getContext("2d");
+ctx.lineCap = "round";
+
+ctx.fillStyle = "black";
+ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+const dotRadius = 1;
+const stepDistance = 11;
+const blankRange = 64;
+let i = 0;
+let prevX = 0;
+let prevYs = funcs.map(func => mapY(func(0)));
+const iID = setInterval(() => {
+    const x = i % canvasWidth;
+
+    ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
+    ctx.fillRect(x, 0, stepDistance + blankRange, canvasSize);
+    ctx.fillRect(x - canvasWidth, 0, stepDistance + blankRange, canvasSize);
+    ctx.fillStyle = "gray";
+    ctx.fillRect(x, canvasSize / 2 - .5, stepDistance, 1);
+    ctx.fillRect(x - canvasWidth, canvasSize / 2 - .5, stepDistance, 1);
+
+    for(let step = 0; step < stepDistance; ++step) {
+        ++i;
+        const x = i % canvasSize;
+        if(!x) prevX = -1;
+
+        funcs.forEach((func, fi) => {
+            const y = mapY(func(i));
+            const prevY = prevYs[fi];
+
+            if(    y >= 0
+                && y < canvasSize
+                && prevY >= 0
+                && prevY < canvasSize
+            ) {
+                ctx.beginPath();
+                ctx.strokeStyle = colors[fi % colors.length];
+                ctx.lineWidth = dotRadius * 2;
+                ctx.moveTo(prevX, prevY);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+            }
+
+            prevYs[fi] = y;
+        });
+
+        prevX = x;
+    }
+}, 30);
+
+        }
+    </script>
+</body>
+</html>
