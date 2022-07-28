@@ -6,19 +6,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>大龍峒保安宮藥籤</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-gH2yIJqKdNHPEq0n4Mqa/HGKIhSkIHeL5AyhkYV8i59U5AR6csBvApHHNl/vI1Bx" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css">
     <style>
         :root {
             scroll-behavior: smooth;
+        }
+        nav {
+            font-family: monospace;
+            line-height: 1.15rem;
+            overflow-x: hidden;
+            text-align: right;
         }
         article {
             margin: 1rem auto;
             border-bottom: 2px solid gray;
         }
-        footer {
-            position: fixed;
-            text-align: right;
-            bottom: 0;
-            right: 0;
+        h1 a, h2 a {
+            text-decoration: none;
+            color: initial;
+        }
+        .bi {
+            font-size: 1.25rem;
+        }
+
+        @media (orientation: portrait) {
+            h1 {
+                position: fixed;
+                top: 0;
+                background: linear-gradient(#fff, #fff 20%, #ffffff80 90%, #ffffff00 100%);
+                padding-bottom: .3em;
+            }
+            nav {
+                margin-top: 3rem;
+            }
         }
     </style>
     <script>
@@ -27,20 +47,46 @@
             return num;
         }
 
+        function scrollTo(hash) {
+            hash = hash.substring(hash.indexOf("#"));
+            if(hash.length <= 1) {
+                location.hash = "#";
+                window.scroll(0, 0);
+                return;
+            }
+            const target = document.querySelector(`a[name="${hash.substring(1)}"]`);
+            if(!target) return;
+            location.hash = hash;
+            target.scrollIntoView({behavior: "auto", block: "center", inline: "center"});
+        }
+
         document.addEventListener("DOMContentLoaded", async () => {
             const text = await fetch("./prescription-baoan.txt").then(res => res.text());
-            const recipes = text.replace(/ /).split(/第\d+首/);
+            const recipes = text.replace(/ /g, "").split(/第\d+首/);
             const main = document.querySelector("main");
             const nav = document.querySelector("nav");
 
             recipes.forEach((recipe, index) => {
                 if(!index) return;
                 const article = document.createElement("article");
+
                 const header = document.createElement("h2");
+                const h2 = document.createElement("h2");
                 const a = document.createElement("a");
                 a.name = index;
-                a.append(`第 ${index} 首`);
-                header.append(a);
+                a.href = `#${index}`;
+                const linkBtn = document.createElement("i");
+                linkBtn.classList.add("bi", "bi-link-45deg");
+                a.append(`第 ${index} 首 `, linkBtn);
+                h2.append(a);
+
+                const upBtn = document.createElement("a");
+                upBtn.classList.add("bi", "bi-arrow-up");
+                upBtn.href = "#";
+                upBtn.title = "回到頁首";
+
+                header.classList.add("d-flex", "justify-content-between");
+                header.append(h2, upBtn);
                 article.appendChild(header);
 
                 const lines = recipe.trim().split(/\r?\n\r?/).reduce((acc, cur) => {
@@ -66,20 +112,37 @@
                 if(!(i % 10)) nav.append(document.createElement("br"));
             }
 
-            const hashNum = location.hash.substring(1);
-            const target = document.querySelector(`a[name="${hashNum}"]`);
-            if(target) target.scrollIntoView({behavior: "auto", block: "center", inline: "center"});
+            document.querySelectorAll("a[href]").forEach(a => {
+                a.addEventListener("click", event => {
+                    const href = event.target.href;
+                    if(href.indexOf("#") === -1) return;
+                    scrollTo(href);
+                    event.preventDefault();
+                });
+            });
+
+            scrollTo(location.hash);
         });
     </script>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>大龍峒保安宮藥籤</h1>
+            <h1 class="m-0 w-100"><a href="#">大龍峒保安宮藥籤</a></h1>
             <nav></nav>
         </header>
         <main></main>
-        <footer><a href="#">Top</a></footer>
+        <footer class="d-flex justify-content-between">
+            <div>
+                <span>注意：</span>
+                如有使用需求仍應由醫藥專業者評估。
+            </div>
+            <div class="secondary small text-nowrap mx-1">
+                註解：<a href="https://www.facebook.com/%E7%94%B2%E9%AC%BC%E7%94%B2%E6%80%AA3141592-104795118795119/">甲鬼甲怪</a>
+                <br>
+                網頁：<a href="https://linktr.ee/kong0107">阿空</a>
+            </div>
+        </footer>
     </div>
 </body>
 </html>
