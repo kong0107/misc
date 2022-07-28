@@ -10,6 +10,16 @@
         :root {
             scroll-behavior: smooth;
         }
+        article {
+            margin: 1rem auto;
+            border-bottom: 2px solid gray;
+        }
+        footer {
+            position: fixed;
+            text-align: right;
+            bottom: 0;
+            right: 0;
+        }
     </style>
     <script>
         function zerofill(num, length) {
@@ -55,6 +65,10 @@
                 nav.append(a, " ");
                 if(!(i % 10)) nav.append(document.createElement("br"));
             }
+
+            const hashNum = location.hash.substring(1);
+            const target = document.querySelector(`a[name="${hashNum}"]`);
+            if(target) target.scrollIntoView({behavior: "auto", block: "center", inline: "center"});
         });
     </script>
 </head>
@@ -65,7 +79,7 @@
             <nav></nav>
         </header>
         <main></main>
-        <footer></footer>
+        <footer><a href="#">Top</a></footer>
     </div>
 </body>
 </html>
