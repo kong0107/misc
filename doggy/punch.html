@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        th {
+            vertical-align: top;
+        }
+    </style>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            document.querySelectorAll(".btnAddPunchRow").forEach(btn => {
+                btn.addEventListener("click", event => {
+                    const target = event.target;
+                    const tr = target.closest("tr");
+                    const clone = tr.cloneNode(true);
+
+                    tr.firstElementChild.rowSpan++;
+                    clone.removeChild(clone.firstElementChild);
+                    tr.insertAdjacentElement("afterend", clone);
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+    <table>
+        <thead>
+            <tr>
+                <th scope="col">Date</th>
+                <th scope="col">Start</th>
+                <th scope="col">End</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <th scope="row">
+                    2022-08-01<button class="btnAddPunchRow">+</button>
+                </th>
+                <td><input type="time" name="ps[2022-08-01][]"></td>
+                <td><input type="time" name="pe[2022-08-01][]"></td>
+            </tr>
+            <tr>
+                <th scope="row">
+                    2022-08-02<button class="btnAddPunchRow">+</button>
+                </th>
+                <td><input type="time" name="ps[2022-08-02][]"></td>
+                <td><input type="time" name="pe[2022-08-02][]"></td>
+            </tr>
+        </tbody>
+    </table>
+
+</body>
+</html>
