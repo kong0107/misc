@@ -3,16 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CSV</title>
+    <title>JSON</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css" crossorigin="anonymous">
     <script type="module">
 import kongUtil from 'https://cdn.jsdelivr.net/npm/kong-util/mod/all.mjs';
 kongUtil.use();
 
 const reader = new FileReader();
-const thead = $('thead'), tbody = $('tbody');
+const [thead, tbody] = $(['thead', 'tbody']);
 const btnStop = $('button');
-let intervalID;
+let callbackID, fields = [], records = [];
 
 listen($('[type=file]'), 'change', event => {
     stop();
@@ -28,32 +29,23 @@ listen(reader, 'load', () => {
     const text = reader.result;
     console.log('file loaded', text.length);
     try {
-        const records = parseCSV(text, false);
+        records = JSON.parse(text);
+        if(!Array.isArray(records)) return stop('not an array');
         console.log(records.length + ' records');
-        const fields = records.shift();
+
+        fields = [];
+        records.forEach(record => {
+            Object.keys(record).forEach(key => {
+                if(!fields.includes(key)) fields.push(key);
+            });
+        });
         thead.append(createElement(
             {tr: {$: [
                 {th: '#'},
                 ...fields.map(th => ({th}))
             ]}}
         ));
-
-        let counter = 0;
-        intervalID = setInterval(() => {
-            const record = records.shift();
-            if(!record) return stop();
-            try {
-                tbody.append(createElement(
-                    {tr: {$: [
-                        {th: (++counter).toString()},
-                        ...record.map(td => ({td}))
-                    ]}}
-                ));
-            }
-            catch(err) {
-                stop(err);
-            }
-        }, 1);
+        callbackID = requestIdleCallback(showNextRecord);
         btnStop.classList.remove('d-none');
         btnStop.disabled = false;
     }
@@ -64,15 +56,33 @@ listen(reader, 'load', () => {
 
 listen(btnStop, 'click', () => stop());
 
+function showNextRecord() {
+    const record = records.shift();
+    if(!record) return stop();
+    try {
+        tbody.append(createElement(
+            {tr: {$: [
+                {th: (tbody.childElementCount + 1).toString()},
+                ...fields.map(field => ({td: record[field]?.toString()}))
+            ]}}
+        ));
+        callbackID = requestIdleCallback(showNextRecord);
+    }
+    catch(err) {
+        stop(err);
+    }
+}
+
 function stop(err) {
     if(err) console.error(err);
-    clearInterval(intervalID);
+    cancelIdleCallback(callbackID);
     btnStop.disabled = true;
+    records = [];
 }
     </script>
 </head>
 <body>
-    <h1>CSV</h1>
+    <h1>JSON</h1>
     <input type="file" title="file">
     <button type="button" class="btn btn-warning d-none">Stop</button>
     <table class="table table-dark table-striped-columns">

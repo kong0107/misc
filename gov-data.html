@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-tw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>政府資料開放平臺API擴充</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" crossorigin="anonymous">
+</head>
+<body class="container">
+    <h1>政府資料開放平臺API擴充</h1>
+    <ol class="list-group" style="list-style-type: cjk-decimal">
+        <li class="list-group-item">
+            <form method="post" action="https://data.gov.tw/api/front/statistics/agency/export">
+                各地方政府
+                <input type="hidden" name="type" value="local">
+                <input type="submit">
+            </form>
+        </li>
+        <li class="list-group-item">
+            <form method="post" action="https://data.gov.tw/api/front/statistics/agency/export">
+                各部會
+                <input type="hidden" name="type" value="central">
+                <input type="submit">
+            </form>
+        </li>
+        <li class="list-group-item">
+            <form method="get" action="https://data.gov.tw/datasets/export/csv">
+                全部資料集
+                <input type="submit">
+            </form>
+        </li>
+        <li class="list-group-item">
+            <form method="post" action="https://data.gov.tw/api/front/statistics/export">
+                資料分類統計
+                <label>
+                    <input type="radio" name="type" value="dataset" required>
+                    資料集
+                </label>
+                <label>
+                    <input type="radio" name="type" value="topic" required>
+                    主題分類
+                </label>
+                <label>
+                    <input type="radio" name="type" value="category" required>
+                    服務分類
+                </label>
+                <label>
+                    <input type="radio" name="type" value="agency" required>
+                    機關別分類
+                </label>
+                <input type="hidden" name="format" value="json">
+                <input type="submit">
+            </form>
+        </li>
+        <li class="list-group-item">
+            <form method="post" action="https://data.gov.tw/api/front/news/export">
+                最新消息
+                <label>
+                    <input type="radio" name="format" value="csv" required>
+                    CSV
+                </label>
+                <label>
+                    <input type="radio" name="format" value="xml" required>
+                    XML
+                </label>
+                <label>
+                    <input type="radio" name="format" value="json" required>
+                    JSON
+                </label>
+                <input type="submit">
+            </form>
+        </li>
+        <li class="list-group-item">
+            <form method="post" action="https://data.gov.tw/api/front/suggest/export">
+                我想要更多
+                <label>
+                    <input type="radio" name="format" value="csv" required>
+                    CSV
+                </label>
+                <label>
+                    <input type="radio" name="format" value="xml" required>
+                    XML
+                </label>
+                <label>
+                    <input type="radio" name="format" value="json" required>
+                    JSON
+                </label>
+                <input type="submit">
+            </form>
+        </li>
+        <li class="list-group-item">
+            <form method="post" action="https://data.gov.tw/api/front/comment/export">
+                我有話要說
+                <label>
+                    <input type="radio" name="format" value="csv" required>
+                    CSV
+                </label>
+                <label>
+                    <input type="radio" name="format" value="xml" required>
+                    XML
+                </label>
+                <label>
+                    <input type="radio" name="format" value="json" required>
+                    JSON
+                </label>
+                <input type="submit">
+            </form>
+        </li>
+    </ol>
+    <footer>
+        資料來源：<a href="https://data.gov.tw/API">政府資料開放平臺API擴充專區</a>
+    </footer>
+</body>
+</html>
