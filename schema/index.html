@@ -252,9 +252,7 @@ data.forEach(vocab => {
                 {span : {
                     class: 'link-primary',
                     text: name,
-                    onclick: () => requestIdleCallback(() => {
-                        window.scroll(0, $(`[id="${name}"]`).offsetTop);
-                    })
+                    onclick: () => scrollToId(name)
                 }}
             ))
         });
@@ -323,6 +321,7 @@ listen($('[type=text]'), 'input', event => {
  * @returns {boolean}
  */
 function searchInProperties(needles, target) {
+    if(!needles.length) return true;
     if(typeof target === 'string')
         return needles.some(needle => target.toLowerCase().includes(needle));
     if(Array.isArray(target))
@@ -361,9 +360,7 @@ function createLinkFromName(str) {
             return {span : {
                 class: 'link-primary',
                 text: str,
-                onclick: () => requestIdleCallback(() => {
-                    window.scroll(0, $(`[id="${name}"]`).offsetTop);
-                })
+                onclick: () => scrollToId(name)
             }};
         case 'foaf':
             return {a: {
@@ -415,6 +412,14 @@ function parseComment(vocab) {
     let html = '<div>' + marked.parse(md) + '</div>';
     html = html.replace(/\[\[(\w+)\]\]/g, '<span class="vocabulary">$1</span>');
     return [...parseHTML(html).childNodes];
+}
+
+function scrollToId(id) {
+    $('[type=text]').value = '';
+    $('[type=text]').dispatchEvent(new Event('input'));
+    requestIdleCallback(() => {
+        window.scroll(0, $(`[id="${id}"]`).offsetTop);
+    });
 }
 
 // requestIdleCallback(() => console.debug('loaded'));
