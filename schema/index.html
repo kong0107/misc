@@ -16,10 +16,13 @@
             margin-bottom: 0;
         }
         dt {
-            width: 12em;
+            min-width: 12em;
             white-space: nowrap;
+            flex: 0;
         }
-        dd { flex: 1; }
+        dd {
+            flex: 1;
+        }
         ul {
             margin: 0;
             padding: 0;
@@ -27,20 +30,52 @@
     </style>
 </head>
 <body class="container">
-    <h1>
-        Vocabulary Definition of
-        <a href="https://schema.org/docs/developers.html#defs">Schema.org</a>
-    </h1>
+    <header class="mb-3 pb-2 border-bottom">
+        <h1>
+            Vocabulary Definition of
+            <a href="https://schema.org/docs/developers.html#defs">Schema.org</a>
+        </h1>
+        <dl>
+            <dt>search</dt>
+            <dd>
+                <input type="text"
+                    class="form-control"
+                    placeholder="search vocabulary (case-insensitive)"
+                >
+            </dd>
+        </dl>
+        <dl>
+            <dt>vocabulary to show</dt>
+            <dd class="row">
+                <label class="col-6">
+                    <input type="checkbox"
+                        class="form-check-input me-1"
+                        checked
+                        disabled
+                    >current
+                </label>
+                <label class="col-6">
+                    <input type="checkbox"
+                        class="form-check-input me-1"
+                        checked
+                    >superseded
+                </label>
+            </dd>
+        </dl>
+        <dl>
+            <dt>properties to show</dt>
+            <dd id="propertiesContainer" class="row"></dd>
+        </dl>
+    </header>
     <main></main>
     <footer></footer>
     <script type="module">
 import kongUtil from 'https://cdn.jsdelivr.net/npm/kong-util/mod/all.mjs';
 kongUtil.use();
-// const schema = await fetchJSON('https://schema.org/version/latest/schemaorg-current-https.jsonld');
+
 const schema = await fetchJSON('schemaorg-current-https.jsonld')
     .catch(() => fetchJSON('https://schema.org/version/latest/schemaorg-current-https.jsonld'))
 ;
-
 
 const properties = [
     '@id', '@type',
@@ -52,11 +87,26 @@ const properties = [
     'skos:closeMatch', 'skos:exactMatch'
 ];
 
-const c = $('main'); // container
-const d = schema['@graph']; // data
-d.forEach(g => {
-    const id = g['@id'].substring(7);
-    const typeList = (Array.isArray(g['@type']) ? g['@type'] : [g['@type']])
+properties.forEach(prop => {
+    $('#propertiesContainer').append(createElement(
+        {label: {
+            class: 'col-6',
+            $: [
+                {input: {
+                    type: 'checkbox',
+                    class: 'form-check-input me-1',
+                    checked: ''
+                }},
+                prop
+            ]
+        }}
+    ));
+});
+
+const data = schema['@graph'];
+data.forEach(vocab => {
+    const id = vocab.id = vocab['@id'].substring(7);
+    const typeList = (Array.isArray(vocab['@type']) ? vocab['@type'] : [vocab['@type']])
         .map(type => {
             if(type.startsWith('schema:'))
                 return {category: 'schema', bg: 'primary', name: type.substring(7)};
@@ -70,50 +120,59 @@ d.forEach(g => {
 
     const es = [ // elements
         {h2: {
-            id,
-            title: '@id',
+            class: '@id',
             text: id
         }}
     ];
-    if(g.hasOwnProperty('schema:supersededBy')) {
+
+    if(vocab.hasOwnProperty('schema:supersededBy')) {
         es.push(
-            {dl: {$: [
-                {dt: {$: [
-                    {span: {
-                        class: 'badge bg-danger',
-                        text: 'schema:supersededBy'
-                    }}
-                ]}},
-                {dd: g['schema:supersededBy']['@id']}
-            ]}}
+            {dl: {
+                class: 'schema:supersededBy',
+                $: [
+                    {dt: {$: [
+                        {span: {
+                            class: 'badge bg-danger',
+                            text: 'schema:supersededBy'
+                        }}
+                    ]}},
+                    {dd: vocab['schema:supersededBy']['@id']}
+                ]
+            }}
         );
     }
 
     es.push(
-        {dl: {$: [
-            {dt: '@type'},
-            {dd: {$: [
-                {ul: {
-                    class: 'list-inline',
-                    $: typeList.map(type => (
-                        {li: {$: [
-                            type.category + ':',
-                            {span: {
-                                class: `badge text-bg-${type.bg}`,
-                                text: type.name
-                            }}
-                        ]}}
-                    ))
-                }}
-            ]}}
-        ]}},
-        {dl: {$: [
-            {dt: 'rdfs:comment'},
-            {dd: (typeof g['rdfs:comment'] === 'string')
-                ? g['rdfs:comment']
-                : g['rdfs:comment']['@value']
-            }
-        ]}}
+        {dl: {
+            class: '@type',
+            $: [
+                {dt: '@type'},
+                {dd: {$: [
+                    {ul: {
+                        class: 'list-inline',
+                        $: typeList.map(type => (
+                            {li: {$: [
+                                type.category + ':',
+                                {span: {
+                                    class: `badge text-bg-${type.bg}`,
+                                    text: type.name
+                                }}
+                            ]}}
+                        ))
+                    }}
+                ]}}
+            ]
+        }},
+        {dl: {
+            class: 'rdfs:comment',
+            $: [
+                {dt: 'rdfs:comment'},
+                {dd: (typeof vocab['rdfs:comment'] === 'string')
+                    ? vocab['rdfs:comment']
+                    : vocab['rdfs:comment']['@value']
+                }
+            ]
+        }}
     );
 
     [
@@ -124,28 +183,110 @@ d.forEach(g => {
         'schema:rangeIncludes', 'schema:sameAs', 'schema:source',
         'skos:closeMatch', 'skos:exactMatch'
     ].forEach(prop => {
-        if(!g.hasOwnProperty(prop)) return;
-        if(!Array.isArray(g[prop])) g[prop] = [g[prop]];
+        if(!vocab.hasOwnProperty(prop)) return;
+        if(!Array.isArray(vocab[prop])) vocab[prop] = [vocab[prop]];
         es.push(
-            {dl: {$: [
-                {dt: prop},
-                {dd: {$: [
-                    {ul: {
-                        class: 'list-unstyled',
-                        $: g[prop].map(obj => (
-                            {li: obj['@id']}
-                        ))
-                    }}
-                ]}}
-            ]}}
+            {dl: {
+                class: prop,
+                $: [
+                    {dt: prop},
+                    {dd: {$: [
+                        {ul: {
+                            class: 'list-unstyled',
+                            $: vocab[prop].map(obj => (
+                                {li: obj['@id']}
+                            ))
+                        }}
+                    ]}}
+                ]
+            }}
         );
     });
 
-    for(let prop in g)
-        if(!properties.includes(prop)) console.log(prop);
+    for(let prop in vocab)
+        if(!properties.includes(prop) && prop !== 'id') console.log(prop);
 
-    c.append(createElement({section: {$: es}}));
+    requestIdleCallback(() =>
+        $('main').append(createElement(
+            {section: {
+                id,
+                class: vocab.hasOwnProperty('schema:supersededBy') ? 'superseded' : '',
+                $: es
+            }}
+        ))
+    );
 });
+
+
+/**
+ * 先建好「不要顯示這個類別名稱」的 <style> 們，需要時再套用。
+ */
+const styles = properties.reduce(
+    (acc, property) => Object.assign(acc, {
+        [property]: createElement(
+            {style: `[class="${property}"] { display: none; }`}
+        )
+    }
+), {
+    superseded: createElement({style: '.superseded { display: none; }'})
+});
+$$('[type=checkbox]').forEach(checkbox => {
+    listen(checkbox, 'click', () => {
+        const prop = checkbox.nextSibling.textContent.trim();
+        if(checkbox.checked) styles[prop].remove();
+        else document.head.append(styles[prop]);
+    });
+});
+
+
+listen($('[type=text]'), 'input', event => {
+    /**
+     * 拆解搜尋框的字串
+     * 例如 'aa bb "cc dd ee" gg"hh'
+     * 即應被拆解成 ['aa', 'bb', 'cc dd ee', 'gg"hh']
+     */
+    const needles = event.target.value.trim()
+        .split(/\s+/).filter(x => x)
+        .map(str => str.toLowerCase())
+    ;
+    let pos;
+    while((pos = needles.findIndex(n => n.startsWith('"'))) !== -1) {
+        const last = needles.findIndex((n, i) => {
+            if(!n.endsWith('"') || i < pos) return false;
+            if(i === pos && n.length === 1) return false; // '"'
+            return true;
+        });
+        if(last === -1) break;
+        const combinedNeedle = needles.slice(pos, last + 1).join(' ').slice(1, -1); // 移掉頭尾的雙引號
+        if(combinedNeedle.length) needles.splice(pos, last - pos + 1, combinedNeedle);
+        else needles.splice(pos, 1);
+    }
+    // console.debug(needles);
+
+    // 資料建完前，某些元件還不存在，會觸發錯誤，故存取其他元件的動作要包在 requestIdleCallback 裡。
+    requestIdleCallback(() => {
+        data.forEach(voc => {
+            $(`[id="${voc.id}"]`).style.display = searchInProperties(needles, voc) ? '' : 'none';
+        });
+    });
+});
+
+
+/**
+ * @param {string[]} needles
+ * @param {string|Array|Object} target
+ * @returns {boolean}
+ */
+function searchInProperties(needles, target) {
+    if(typeof target === 'string')
+        return needles.some(needle => target.toLowerCase().includes(needle));
+    if(Array.isArray(target))
+        return target.some(elem => searchInProperties(needles, elem));
+    for(let prop in target) {
+        if(searchInProperties(needles, target[prop])) return true;
+    }
+    return false;
+}
 
     </script>
 </body>
