@@ -23,14 +23,19 @@
         }
         details {
             margin: .5em 0;
-            padding: .5em;
+            padding-left: .5em;
         }
         details[open] {
             border-left: 1px solid #888;
         }
-        details[open] > summary, dt {
+        details[open] > summary {
             position: sticky;
             background-color: #fff;
+            border-bottom-left-radius: .3em;
+            padding: 0 .2em;
+        }
+        body {
+            background-color: #ccc;
         }
     </style>
 </head>
@@ -53,17 +58,6 @@ const schema = await fetchJSON('schemaorg-current-https.jsonld')
     .catch(() => fetchJSON('https://schema.org/version/latest/schemaorg-current-https.jsonld'))
 ;
 
-// 所有屬性
-const propertyNames = [
-    '@id', '@type',
-    'dcterms:source',
-    'owl:equivalentClass', 'owl:equivalentProperty',
-    'rdfs:label', 'rdfs:comment', 'rdfs:subClassOf', 'rdfs:subPropertyOf',
-    'schema:domainIncludes', 'schema:inverseOf', 'schema:isPartOf',
-    'schema:rangeIncludes', 'schema:sameAs', 'schema:source', 'schema:supersededBy',
-    'skos:closeMatch', 'skos:exactMatch'
-];
-
 // 整理原始資料
 const vocabulary = schema['@graph']
 .map(term => {
@@ -80,10 +74,6 @@ const vocabulary = schema['@graph']
                 obj[prop] = Array.isArray(value) ? value : [value];
                 break;
             }
-            case 'schema:supersededBy': {
-                obj[prop] = value['@id'];
-                break;
-            }
             case 'rdfs:comment': {
                 if(typeof value !== 'string') value = value['@value'];
                 let html = '<div>' + marked.parse(value.replace(/\\n/g, '\n')) + '</div>';
@@ -91,10 +81,30 @@ const vocabulary = schema['@graph']
                 obj[prop] = parseHTML(html);
                 break;
             }
-            default: {
+            // 至多只會有一個值的
+            case 'owl:equivalentProperty':
+            case 'rdfs:subClassOf':
+            case 'schema:inverseOf':
+            case 'schema:isPartOf':
+            case 'schema:sameAs':
+            case 'schema:supersededBy':
+            case 'skos:exactMatch': {
+                obj[prop] = value['@id'];
+                break;
+            }
+            // 有時只有一值，有時是陣列的
+            case 'dcterms:source':
+            case 'owl:equivalentClass':
+            case 'rdfs:subPropertyOf':
+            case 'schema:domainIncludes':
+            case 'schema:rangeIncludes':
+            case 'schema:source':
+            case 'skos:closeMatch': {
                 if(!Array.isArray(value)) value = [value];
                 obj[prop] = value.map(item => item['@id']);
+                break;
             }
+            default: console.error('unknown property', prop);
         }
     }
     return obj;
@@ -111,10 +121,10 @@ properties.forEach(prop => {
         rdfsClass.properties = rdfsClass.properties || [];
         rdfsClass.properties.push(prop['@id']);
     });
-})
-
-// console.log(vocabulary);
-// console.log(classes);
+});
+classes.forEach(c => {
+    c.properties?.sort((a, b) => (a < b) ? -1 : 1);
+});
 
 
 // 建立與顯示
@@ -127,34 +137,73 @@ requestIdleCallback(() => console.timeEnd('load'));
 /**** 以下是函式宣告 ****/
 
 function createContainer(term, depth = 0) {
+    if(typeof term === 'string') term = classes.find(c => c['@id'] === term);
+
     const container = createElement(
         {details: {$: [
             {summary: {
-                style: 'top: ' + (depth * 2.5) + 'em',
+                style: `top: ${depth * 1.5}em; z-index: ${100 - depth};`,
                 text: term['@id']
             }}
         ]}}
     );
-    listen(container, 'toggle', event => {
+    listen(container, 'toggle', () => {
         container.append(term['rdfs:comment']);
+
+        if(term.hasOwnProperty('schema:supersededBy')) {
+            const superseder = term['schema:supersededBy'].split(':')[1];
+            container.append(createElement(
+                {div: {$: [
+                    {span: {
+                        class: 'badge bg-danger',
+                        text: 'supersededBy'
+                    }}
+                ]}}
+            ));
+            container.lastChild.append(createContainer(superseder, depth + 1));
+        }
+
+        if(term.hasOwnProperty('rdfs:subClassOf')) {
+            const parent = term['rdfs:subClassOf'].split(':')[1];
+            container.append(createElement(
+                {div: {$: [
+                    {span: {
+                        class: 'badge bg-success',
+                        text: 'subClassOf'
+                    }}
+                ]}}
+            ));
+            container.lastChild.append(createContainer(parent, depth + 1));
+        }
 
         term.properties?.forEach(propName => {
             const prop = properties.find(term => term['@id'] === propName);
             const dl = createElement(
                 {dl: {$: [
-                    {dt: {
-                        style: 'top: ' + (depth * 2.5 + 1.2) + 'em',
-                        text: propName
-                    }},
-                    {dd: {$: [
-                        prop['rdfs:comment']
-                    ]}}
+                    {dt: propName}
                 ]}}
             );
+            if(prop.hasOwnProperty('schema:supersededBy')) {
+                const superseder = prop['schema:supersededBy'].split(':')[1];
+                dl.append(createElement(
+                    {dd: {$: [
+                        {span: {
+                            class: 'badge bg-danger',
+                            text: 'supersededBy'
+                        }},
+                        superseder
+                    ]}}
+                ));
+            }
+            dl.append(createElement(
+                {dd: {$: [
+                    prop['rdfs:comment']//.cloneNode(true) // why disappear?
+                ]}}
+            ));
             prop['schema:rangeIncludes'].forEach(type => {
-                const [, className] = type.split(':');
+                const className = type.split(':')[1];
                 dl.append(createElement({tag: 'dd'}));
-                dl.lastChild.append(createContainer(classes.find(c => c['@id'] === className), depth + 1));
+                dl.lastChild.append(createContainer(className, depth + 1));
             });
             container.append(dl);
         });
