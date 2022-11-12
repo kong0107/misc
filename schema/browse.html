@@ -13,6 +13,7 @@
         .material-symbols-outlined {
             -webkit-user-select: none;
             user-select: none;
+            transform: scale(0.8) translate(0, .3em);
         }
         p {
             margin-bottom: .3em;
@@ -143,7 +144,14 @@ function createContainer(term, depth = 0) {
         {details: {$: [
             {summary: {
                 style: `top: ${depth * 1.5}em; z-index: ${100 - depth};`,
-                text: term['@id']
+                $: [
+                    term['@id'],
+                    {a: {
+                        class: 'material-symbols-outlined text-decoration-none',
+                        href: 'https://schema.org/' + term['@id'],
+                        text: 'open_in_new'
+                    }}
+                ]
             }}
         ]}}
     );
@@ -180,7 +188,14 @@ function createContainer(term, depth = 0) {
             const prop = properties.find(term => term['@id'] === propName);
             const dl = createElement(
                 {dl: {$: [
-                    {dt: propName}
+                    {dt: {$: [
+                        propName,
+                        {a: {
+                            class: 'material-symbols-outlined text-decoration-none',
+                            href: 'https://schema.org/' + propName,
+                            text: 'open_in_new'
+                        }}
+                    ]}}
                 ]}}
             );
             if(prop.hasOwnProperty('schema:supersededBy')) {
