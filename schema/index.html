@@ -16,6 +16,8 @@
         section dl:not([class~="rdfs:comment"]) dd {
             font-family: monospace;
         }
+
+        main > section { display: none; } /* 後面再用更特定的選擇器讓其出現 */
     </style>
 </head>
 <body class="container">
@@ -91,10 +93,17 @@ const schema = await fetchJSON('schemaorg-current-https.jsonld')
     .catch(() => fetchJSON('https://schema.org/version/latest/schemaorg-current-https.jsonld'))
 ;
 
-// 先建好「不要顯示這個類別名稱」的 <style> 們，需要時再套用。（稍後會追加）
+// 先建好 <style> 們，需要時再套用／拿掉。（後面會再追加）
 const styles = {
-    superseded: createElement({style: '.superseded { display: none; }'})
+    'rdfs:Class': createElement({style: 'main > section[class~="rdfs:Class"] { display: block; }'}),
+    'rdf:Property': createElement({style: 'main > section[class~="rdf:Property"] { display: block; }'}),
+    'schema:*': createElement({style: 'main > section[class*="schema:"] { display: block; }'})
 };
+for(let prop in styles) document.head.append(styles[prop]);
+
+Object.assign(styles, {
+    superseded: createElement({style: '.superseded { display: none; }'})
+});
 
 // 所有要顯示的屬性
 const properties = [
@@ -135,12 +144,26 @@ properties.forEach(prop => {
     });
 });
 
+/**
+ * 核取方塊與對應的行為。
+ * 有些是「勾起來時要隱藏別的」，有些則是「沒勾時要隱藏自己」。
+ */
 $$('header [type=checkbox]').forEach(checkbox => {
-    listen(checkbox, 'click', () => {
-        const prop = checkbox.nextSibling.textContent.trim();
-        if(checkbox.checked) styles[prop].remove();
-        else document.head.append(styles[prop]);
-    });
+    const prop = checkbox.nextSibling.textContent.trim();
+    if(checkbox.closest('#propertiesContainer') || prop === 'superseded') {
+        listen(checkbox, 'click', () => {
+            console.debug(prop);
+            if(checkbox.checked) styles[prop].remove();
+            else document.head.append(styles[prop]);
+        });
+    }
+    else {
+        listen(checkbox, 'click', () => {
+            console.debug(prop);
+            if(checkbox.checked) document.head.append(styles[prop]);
+            else styles[prop].remove();
+        });
+    }
 });
 
 // 整理並建立用於顯示的資料結構
