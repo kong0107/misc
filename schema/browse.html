@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vocabulary Definition of Schema.org (unofficial)</title>
+    <base target="_blank">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,0,0" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" crossorigin="anonymous"></script>
+    <style>
+        [class^=link] { cursor: pointer; }
+        .material-symbols-outlined {
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        p {
+            margin-bottom: .3em;
+        }
+        dd {
+            padding-left: 1em;
+            margin-bottom: .3em;
+        }
+        details {
+            margin: .5em 0;
+            padding: .5em;
+        }
+        details[open] {
+            border-left: 1px solid #888;
+        }
+        details[open] > summary, dt {
+            position: sticky;
+            background-color: #fff;
+        }
+    </style>
+</head>
+<body class="container">
+    <header class="pb-2">
+        <h1 class="fs-3">
+            Vocabulary Definition of
+            <a href="https://schema.org/docs/developers.html#defs">Schema.org</a>
+        </h1>
+    </header>
+    <main></main>
+    <footer></footer>
+    <script type="module">
+console.time('load');
+import kongUtil from 'https://cdn.jsdelivr.net/npm/kong-util/mod/all.mjs';
+kongUtil.use();
+
+// 嘗試抓同主機的，沒有的話就抓官方的。
+const schema = await fetchJSON('schemaorg-current-https.jsonld')
+    .catch(() => fetchJSON('https://schema.org/version/latest/schemaorg-current-https.jsonld'))
+;
+
+// 所有屬性
+const propertyNames = [
+    '@id', '@type',
+    'dcterms:source',
+    'owl:equivalentClass', 'owl:equivalentProperty',
+    'rdfs:label', 'rdfs:comment', 'rdfs:subClassOf', 'rdfs:subPropertyOf',
+    'schema:domainIncludes', 'schema:inverseOf', 'schema:isPartOf',
+    'schema:rangeIncludes', 'schema:sameAs', 'schema:source', 'schema:supersededBy',
+    'skos:closeMatch', 'skos:exactMatch'
+];
+
+// 整理原始資料
+const vocabulary = schema['@graph']
+.map(term => {
+    const obj = {};
+    for(let prop in term) {
+        let value = term[prop];
+        switch(prop) {
+            case '@id': {
+                obj[prop] = value.substring(7);
+                break;
+            }
+            case '@type':
+            case 'rdfs:label': {
+                obj[prop] = Array.isArray(value) ? value : [value];
+                break;
+            }
+            case 'schema:supersededBy': {
+                obj[prop] = value['@id'];
+                break;
+            }
+            case 'rdfs:comment': {
+                if(typeof value !== 'string') value = value['@value'];
+                let html = '<div>' + marked.parse(value.replace(/\\n/g, '\n')) + '</div>';
+                html = html.replace(/\[\[(\w+)\]\]/g, '<span class="vocabulary">$1</span>');
+                obj[prop] = parseHTML(html);
+                break;
+            }
+            default: {
+                if(!Array.isArray(value)) value = [value];
+                obj[prop] = value.map(item => item['@id']);
+            }
+        }
+    }
+    return obj;
+});
+
+// 生成想要的資料
+const classes = vocabulary.filter(term => term['@type'].includes('rdfs:Class'));
+const properties = vocabulary.filter(term => term['@type'].includes('rdf:Property'));
+
+properties.forEach(prop => {
+    prop['schema:domainIncludes']?.forEach(className => {
+        className = className.split(':')[1];
+        const rdfsClass = vocabulary.find(c => c['@id'] === className);
+        rdfsClass.properties = rdfsClass.properties || [];
+        rdfsClass.properties.push(prop['@id']);
+    });
+})
+
+// console.log(vocabulary);
+// console.log(classes);
+
+
+// 建立與顯示
+classes
+.sort((a, b) => (a['@id'] < b['@id']) ? -1 : 1)
+.forEach(term => $('main').append(createContainer(term)));
+
+requestIdleCallback(() => console.timeEnd('load'));
+
+/**** 以下是函式宣告 ****/
+
+function createContainer(term, depth = 0) {
+    const container = createElement(
+        {details: {$: [
+            {summary: {
+                style: 'top: ' + (depth * 2.5) + 'em',
+                text: term['@id']
+            }}
+        ]}}
+    );
+    listen(container, 'toggle', event => {
+        container.append(term['rdfs:comment']);
+
+        term.properties?.forEach(propName => {
+            const prop = properties.find(term => term['@id'] === propName);
+            const dl = createElement(
+                {dl: {$: [
+                    {dt: {
+                        style: 'top: ' + (depth * 2.5 + 1.2) + 'em',
+                        text: propName
+                    }},
+                    {dd: {$: [
+                        prop['rdfs:comment']
+                    ]}}
+                ]}}
+            );
+            prop['schema:rangeIncludes'].forEach(type => {
+                const [, className] = type.split(':');
+                dl.append(createElement({tag: 'dd'}));
+                dl.lastChild.append(createContainer(classes.find(c => c['@id'] === className), depth + 1));
+            });
+            container.append(dl);
+        });
+
+    }, {once: true});
+    return container;
+}
+    </script>
+</body>
+</html>
