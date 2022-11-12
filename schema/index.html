@@ -9,63 +9,41 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,0,0" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" crossorigin="anonymous"></script>
     <style>
-        h1 { font-size: 1.6rem; }
-        section {
-            margin-bottom: 2em;
-        }
-        h2 { font-size: 1.4rem; }
-        dl {
-            display: flex;
-            margin-bottom: 0;
-        }
-        dt {
-            min-width: 12em;
-            white-space: nowrap;
-            flex: 0;
-        }
-        dd { flex: 1; }
-        ul {
-            margin: 0;
-            padding: 0;
-        }
         [class^=link] { cursor: pointer; }
+        .material-symbols-outlined { user-select: none }
 
-        section > dl:not([class="rdfs:comment"]) > dd {
+        label,
+        section dl:not([class~="rdfs:comment"]) dd {
             font-family: monospace;
-        }
-        .property-category {
-            font-weight: normal;
-            color: #888;
-            font-size: smaller;
         }
     </style>
 </head>
 <body class="container">
     <header class="mb-3 pb-2 border-bottom">
-        <h1>
+        <h1 class="fs-3">
             Vocabulary Definition of
             <a href="https://schema.org/docs/developers.html#defs">Schema.org</a>
         </h1>
-        <dl>
-            <dt>search</dt>
-            <dd>
+        <dl class="row">
+            <dt class="col-md-3">search</dt>
+            <dd class="col">
                 <input type="text"
                     class="form-control"
                     placeholder="search vocabulary (case-insensitive)"
                 >
             </dd>
         </dl>
-        <dl>
-            <dt>vocabulary to show</dt>
-            <dd class="row">
-                <label class="col-6">
+        <dl class="row">
+            <dt class="col-md-3">vocabulary to show</dt>
+            <dd class="col row">
+                <label class="col-md-6">
                     <input type="checkbox"
                         class="form-check-input me-1"
                         checked
                         disabled
                     >current
                 </label>
-                <label class="col-6">
+                <label class="col-md-6">
                     <input type="checkbox"
                         class="form-check-input me-1"
                         checked
@@ -73,21 +51,52 @@
                 </label>
             </dd>
         </dl>
-        <dl>
-            <dt>properties to show</dt>
-            <dd id="propertiesContainer" class="row"></dd>
+        <dl class="row">
+            <dt class="col-md-3">types to show</dt>
+            <dd class="col row">
+                <label class="col-md-4">
+                    <input type="checkbox"
+                        class="form-check-input me-1"
+                        checked
+                    >rdfs:Class
+                </label>
+                <label class="col-md-4">
+                    <input type="checkbox"
+                        class="form-check-input me-1"
+                        checked
+                    >rdf:Property
+                </label>
+                <label class="col-md-4">
+                    <input type="checkbox"
+                        class="form-check-input me-1"
+                        checked
+                    >schema:*
+                </label>
+            </dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-md-3">properties to show</dt>
+            <dd id="propertiesContainer" class="col row"></dd>
         </dl>
     </header>
     <main></main>
-    <footer></footer>
+    <footer><nav class="nav"></nav></footer>
     <script type="module">
+console.time('load schema');
 import kongUtil from 'https://cdn.jsdelivr.net/npm/kong-util/mod/all.mjs';
 kongUtil.use();
 
+// 嘗試抓同主機的，沒有的話就抓官方的。
 const schema = await fetchJSON('schemaorg-current-https.jsonld')
     .catch(() => fetchJSON('https://schema.org/version/latest/schemaorg-current-https.jsonld'))
 ;
 
+// 先建好「不要顯示這個類別名稱」的 <style> 們，需要時再套用。（稍後會追加）
+const styles = {
+    superseded: createElement({style: '.superseded { display: none; }'})
+};
+
+// 所有要顯示的屬性
 const properties = [
     '@id', '@type',
     'dcterms:source',
@@ -98,10 +107,15 @@ const properties = [
     'skos:closeMatch', 'skos:exactMatch'
 ];
 
+/**
+ * 把所有屬性都：
+ * 1. 在控制區建立 checkbox 。
+ * 2. 建立（但暫不套用）隱藏對應屬性的 <style> 。
+ */
 properties.forEach(prop => {
-    $('#propertiesContainer').append(createElement(
+    const labelElem = createElement(
         {label: {
-            class: 'col-6',
+            class: 'col-md-6 col-lg-4',
             $: [
                 {input: {
                     type: 'checkbox',
@@ -111,29 +125,41 @@ properties.forEach(prop => {
                 prop
             ]
         }}
-    ));
+    );
+    if(prop === '@id') $('input', labelElem).disabled = true;
+    $('#propertiesContainer').append(labelElem);
+    Object.assign(styles, {
+        [prop]: createElement(
+            {style: `[class~="${prop}"] { display: none; }`}
+        )
+    });
 });
 
-const data = schema['@graph'];
-data.forEach(vocab => {
-    const id = vocab.id = vocab['@id'].substring(7);
-    const typeList = (Array.isArray(vocab['@type']) ? vocab['@type'] : [vocab['@type']])
-        .map(type => {
-            if(type.startsWith('schema:'))
-                return {category: 'schema', bg: 'primary', name: type.substring(7)};
-            if(type === 'rdf:Property')
-                return {category: 'rdf', bg: 'info', name: 'Property'};
-            if(type === 'rdfs:Class')
-                return {category: 'rdfs', bg: 'warning', name: 'Class'};
-            console.error('unknown type', type);
-        });
-    ;
+$$('header [type=checkbox]').forEach(checkbox => {
+    listen(checkbox, 'click', () => {
+        const prop = checkbox.nextSibling.textContent.trim();
+        if(checkbox.checked) styles[prop].remove();
+        else document.head.append(styles[prop]);
+    });
+});
 
-    const es = [ // elements
+// 整理並建立用於顯示的資料結構
+schema['@graph'].forEach(vocab => {
+    // 確認沒有其他屬性
+    for(let prop in vocab)
+        if(!properties.includes(prop)) console.log(prop);
+
+    // 先整理一下
+    const id = vocab.id = vocab['@id'].substring(7);
+    if(!Array.isArray(vocab['@type'])) vocab['@type'] = [vocab['@type']];
+
+    // 開始建立資料結構
+    const es = []; // elements
+    es.push(
         {h2: {
-            class: '@id',
+            class: '@id fs-4',
             $: [
-                id,
+                id + ' ',
                 {a: {
                     class: 'material-symbols-outlined text-decoration-none',
                     href: 'https://schema.org/' + id,
@@ -141,70 +167,116 @@ data.forEach(vocab => {
                 }}
             ]
         }}
-    ];
+    );
 
+    // 若已被取代了，要優先警示。
     if(vocab.hasOwnProperty('schema:supersededBy')) {
         es.push(
             {dl: {
-                class: 'schema:supersededBy',
+                class: 'schema:supersededBy row mb-0',
                 $: [
-                    {dt: {$: [
-                        {span: {
-                            class: 'property-category',
-                            text: 'schema:'
-                        }},
-                        {span: {
-                            class: 'property-namebadge badge bg-danger',
-                            text: 'supersededBy'
-                        }}
-                    ]}},
-                    {dd: {$: [
-                        createLinkFromName(vocab['schema:supersededBy']['@id'])
-                    ]}}
+                    {dt: {
+                        class: 'col-md-4 col-lg-3',
+                        $: [
+                            {span: {
+                                class: 'fs-6 fw-lighter text-secondary',
+                                text: 'schema:'
+                            }},
+                            {span: {
+                                class: 'badge bg-danger',
+                                text: 'supersededBy'
+                            }}
+                        ]
+                    }},
+                    {dd: {
+                        class: 'col',
+                        $: createLinkFromName(vocab['schema:supersededBy'])
+                    }}
                 ]
             }}
         );
     }
 
+    /**
+     * 處理與顯示 @type ，
+     * `rdf:Property` 和 `rdfs:Class` 著重在顯示 'Property' 和 'Class' ，
+     * `schema:` 開頭的則著重顯示 'schema' 。
+     */
     es.push(
         {dl: {
-            class: '@type',
+            class: '@type row mb-0',
             $: [
-                {dt: {$: [
-                    {span: {
-                        class: 'property-category',
-                        text: '@'
-                    }},
-                    {span: {
-                        class: 'property-name',
-                        text: 'type'
-                    }}
-                ]}},
-                {dd: {$: [
-                    {ul: {
-                        class: 'list-inline',
-                        $: typeList.map(type => (
-                            {li: {$: [
-                                type.category + ':',
-                                {span: {
-                                    class: `badge text-bg-${type.bg}`,
-                                    text: type.name
-                                }}
-                            ]}}
-                        ))
-                    }}
-                ]}}
-            ]
-        }},
-        {dl: {
-            class: 'rdfs:comment',
-            $: [
-                {dt: departPropertyName('rdfs:comment')},
-                {dd: {$: parseComment(vocab)}}
+                {dt: {
+                    class: 'col-md-4 col-lg-3',
+                    $: [
+                        {span: {
+                            class: 'fs-6 fw-lighter text-secondary',
+                            text: '@'
+                        }},
+                        {span: 'type'}
+                    ]
+                }},
+                {dd: {
+                    class: 'col',
+                    $: [
+                        {ul: {
+                            class: 'list-inline',
+                            $: vocab['@type'].map(type => {
+                                const [category, name] = type.split(':');
+                                if(category === 'schema') return {
+                                    li: {$: [
+                                        {span: {
+                                            class: 'badge text-bg-success',
+                                            text: 'schema'
+                                        }},
+                                        ':',
+                                        {span: {
+                                            class: 'vocabulary',
+                                            text: name
+                                        }}
+                                    ]}
+                                };
+                                else return {
+                                    li: {$: [
+                                        category,
+                                        ':',
+                                        {span: {
+                                            class: 'badge text-bg-' + (category === 'rdf' ? 'info' : 'warning'),
+                                            text: name
+                                        }}
+                                    ]}
+                                };
+                            })
+                        }}
+                    ]
+                }}
             ]
         }}
     );
 
+    // `rdfs:comment` 要透過 markdown ，另外處理。
+    es.push(
+        {dl: {
+            class: 'rdfs:comment row mb-0',
+            $: [
+                {dt: {
+                    class: 'col-md-4 col-lg-3',
+                    $: departPropertyName('rdfs:comment')
+                }},
+                {dd: {
+                    class: 'col',
+                    $: parseComment(vocab)
+                }}
+            ]
+        }}
+    );
+
+    /**
+     * 剩下的屬性們，可能的情形：
+     * * 可能只有單一物件，也可能是一維陣列。
+     * * 終端物件都是 { "@id": "xxxx" }
+     * * 上述 "xxxx" 要嘛是 URL ，要嘛是 /\w+:\w+/ 格式。
+     */
     [
         'dcterms:source',
         'owl:equivalentClass', 'owl:equivalentProperty',
@@ -217,71 +289,54 @@ data.forEach(vocab => {
         if(!Array.isArray(vocab[prop])) vocab[prop] = [vocab[prop]];
         es.push(
             {dl: {
-                class: prop,
+                class: prop + ' row mb-0',
                 $: [
-                    {dt: departPropertyName(prop)},
-                    {dd: {$: [
-                        {ul: {
-                            class: 'list-unstyled',
-                            $: vocab[prop].map(obj => (
-                                {li: {$: [
-                                    createLinkFromName(obj['@id'])
-                                ]}}
-                            ))
-                        }}
-                    ]}}
+                    {dt: {
+                        class: 'col-md-4 col-lg-3',
+                        $: departPropertyName(prop)
+                    }},
+                    {dd: {
+                        class: 'col',
+                        $: [
+                            {ul: {
+                                class: 'list-unstyled',
+                                $: vocab[prop].map(obj => (
+                                    {li: {$: createLinkFromName(obj)}}
+                                ))
+                            }}
+                        ]
+                    }}
                 ]
             }}
         );
     });
 
-    for(let prop in vocab)
-        if(!properties.includes(prop) && prop !== 'id') console.log(prop);
-
+    /**
+     * 顯示到頁面上。
+     * 因資料多可能造成頁面停滯，故用 `requestIdleCallback` 包起來。
+     */
     requestIdleCallback(() => {
         const section = createElement(
             {section: {
                 id,
-                class: vocab.hasOwnProperty('schema:supersededBy') ? 'superseded' : '',
+                class: 'mb-4 pb-2 border-bottom'
+                    + (vocab.hasOwnProperty('schema:supersededBy') ? ' superseded ' : ' ')
+                    + vocab['@type'].join(' '),
                 $: es
             }}
         );
+
+        // 把 span.vocabulary 轉成可點選的物件。
         $$('.vocabulary', section).forEach(span => {
-            const name = span.textContent;
-            span.replaceWith(createElement(
-                {span : {
-                    class: 'link-primary',
-                    text: name,
-                    onclick: () => scrollToId(name)
-                }}
-            ))
+            span.classList.replace('vocabulary', 'link-primary');
+            listen(span, 'click', () => scrollToId(span.textContent));
         });
+
         $('main').append(section);
     });
 });
 
-
-/**
- * 先建好「不要顯示這個類別名稱」的 <style> 們，需要時再套用。
- */
-const styles = properties.reduce(
-    (acc, property) => Object.assign(acc, {
-        [property]: createElement(
-            {style: `[class="${property}"] { display: none; }`}
-        )
-    }
-), {
-    superseded: createElement({style: '.superseded { display: none; }'})
-});
-$$('[type=checkbox]').forEach(checkbox => {
-    listen(checkbox, 'click', () => {
-        const prop = checkbox.nextSibling.textContent.trim();
-        if(checkbox.checked) styles[prop].remove();
-        else document.head.append(styles[prop]);
-    });
-});
-
-
+// 監看搜尋框，只顯示符合搜尋條件的資料。
 listen($('[type=text]'), 'input', event => {
     /**
      * 拆解搜尋框的字串
@@ -308,12 +363,27 @@ listen($('[type=text]'), 'input', event => {
 
     // 資料建完前，某些元件還不存在，會觸發錯誤，故存取其他元件的動作要包在 requestIdleCallback 裡。
     requestIdleCallback(() => {
-        data.forEach(voc => {
+        schema['@graph'].forEach(voc => {
             $(`[id="${voc.id}"]`).style.display = searchInProperties(needles, voc) ? '' : 'none';
         });
     });
 });
 
+// 把 @context 的連結們放進 footer
+for(let framework in schema['@context']) {
+    const href = schema['@context'][framework];
+    $('body > footer > nav').append(createElement(
+        {a: {
+            href,
+            class: 'nav-link',
+            text: framework
+        }}
+    ));
+}
+
+requestIdleCallback(() => console.timeEnd('load schema'));
+
+/**** 以下是函式宣告 ****/
 
 /**
  * @param {string[]} needles
@@ -333,74 +403,81 @@ function searchInProperties(needles, target) {
 }
 
 
+/**
+ * @param {String./\w+:\w/} str
+ * @returns {JsonElement[2]}
+ */
 function departPropertyName(str) {
     const [category, name] = str.split(':');
-    return {$: [
+    return [
         {span: {
-            class: 'property-category',
+            class: 'fs-6 fw-lighter text-secondary',
             text: category + ':'
         }},
-        {span: {
-            class: 'property-name',
-            text: name
-        }}
-    ]};
+        {span: name}
+    ];
 }
 
-function createLinkFromName(str) {
+/**
+ * @param {string} obj['@id']
+ * @returns {JsonElement[1]}
+ */
+function createLinkFromName(obj) {
+    const str = obj['@id'];
     const [category, name] = str.split(':');
     switch(category) {
         case 'http':
         case 'https':
-            return {a: {
+            return [{a: {
                 href: str,
                 text: str
-            }};
+            }}];
         case 'schema':
-            return {span : {
+            return [{span : {
                 class: 'link-primary',
                 text: str,
                 onclick: () => scrollToId(name)
-            }};
+            }}];
         case 'foaf':
-            return {a: {
+            return [{a: {
                 href: `http://xmlns.com/foaf/0.1/#term_${name}`,
                 text: str
-            }};
+            }}];
         case 'dcmitype':
-            return {a: {
+            return [{a: {
                 href: `https://www.dublincore.org/specifications/dublin-core/dcmi-terms/dcmitype/${name}/`,
                 text: str
-            }};
+            }}];
         case 'dcterms':
-            return {a: {
+            return [{a: {
                 href: `https://www.dublincore.org/specifications/dublin-core/dcmi-terms/terms/${name}/`,
                 text: str
-            }};
+            }}];
         case 'dcat':
-            return {a: {
+            return [{a: {
                 href: `https://www.w3.org/TR/vocab-dcat-3/#Class:${name}`,
                 text: str
-            }};
+            }}];
         case 'rdf':
         case 'rdfs':
-            return {a: {
+            return [{a: {
                 href: 'https://www.w3.org/TR/2014/REC-rdf-schema-20140225/#ch_' + name.toLowerCase(),
                 text: str
-            }};
+            }}];
         case 'void':
-            return {a: {
+            return [{a: {
                 href: 'https://www.w3.org/TR/void/',
                 text: str
-            }};
+            }}];
         default:
-            console.log(str);
-            return str;
+            console.warn('unknown property', str);
+            return [str];
     }
 }
 
 /**
- * @returns {Element[]}
+ * @param {string|Array.<string>} vocab['rdfs:comment']
+ * @returns {HTMLElement[]}
  */
 function parseComment(vocab) {
     let md = (typeof vocab['rdfs:comment'] === 'string')
@@ -414,6 +491,10 @@ function parseComment(vocab) {
     return [...parseHTML(html).childNodes];
 }
 
+/**
+ * @param {string} id
+ * @returns void
+ */
 function scrollToId(id) {
     $('[type=text]').value = '';
     $('[type=text]').dispatchEvent(new Event('input'));
@@ -421,8 +502,6 @@ function scrollToId(id) {
         window.scroll(0, $(`[id="${id}"]`).offsetTop);
     });
 }
-
-// requestIdleCallback(() => console.debug('loaded'));
     </script>
 </body>
 </html>
