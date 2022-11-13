@@ -10,21 +10,21 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" crossorigin="anonymous"></script>
     <style>
         body { background-color: #ccc; }
+        p { margin-bottom: .5em; }
+        dl { margin-bottom: .5em; }
         dd { padding-left: 1em; }
         details { padding: 0 0 .5em .5em; }
         details[open] { border-left: 1px solid #888; }
-        details[open] > summary:not(:has(.badge)) {
+        details[open] > summary:not(:has(.badge:only-child)) {
             position: sticky;
             background-color: #fff;
             border-bottom-left-radius: .3em;
             padding: 0 .2em;
         }
-
-        [class^=link] { cursor: pointer; }
         .material-symbols-outlined {
             -webkit-user-select: none;
             user-select: none;
-            transform: scale(0.8) translate(0, .3em);
+            transform: scale(.8) translate(0, .3em);
             text-decoration: none;
         }
     </style>
@@ -103,25 +103,17 @@ const vocabulary = schema['@graph']
 
 // 生成想要的資料
 const classes = vocabulary.filter(term => term['@type'].includes('rdfs:Class'));
-const properties = vocabulary.filter(term => term['@type'].includes('rdf:Property'));
-const schemaTerms = vocabulary.filter(term => term['@type'].some(type => type.startsWith('schema:')));
 
-Object.assign(globalThis, {vocabulary, classes, properties, schemaTerms}); // 除錯用
-
-properties.forEach(prop => {
-    prop['schema:domainIncludes']?.forEach(className => {
+vocabulary.forEach(term => {
+    term['schema:domainIncludes']?.forEach(className => {
         className = className.split(':')[1];
-        const rdfsClass = vocabulary.find(c => c['@id'] === className);
+        const rdfsClass = classes.find(c => c['@id'] === className);
         rdfsClass.properties = rdfsClass.properties || [];
-        rdfsClass.properties.push(prop['@id']);
+        rdfsClass.properties.push(term['@id']);
     });
-});
-classes.forEach(c => {
-    c.properties?.sort((a, b) => (a < b) ? -1 : 1);
-});
 
-schemaTerms.forEach(term => {
-    const enumName = term['@type'].find(t => t.startsWith('schema:')).split(':')[1];
+    const enumName = term['@type'].find(t => t.startsWith('schema:'))?.split(':')[1];
+    if(!enumName) return;
     const en = classes.find(c => c['@id'] === enumName);
     en.members = en.members || [];
     en.members.push(term['@id']);
@@ -130,6 +122,8 @@ schemaTerms.forEach(term => {
 // 建立與顯示
 classes.forEach(term => $('main').append(createContainer(term)));
 
+// 除錯用
+globalThis.vocabulary = vocabulary;
 requestIdleCallback(() => console.timeEnd('load'));
 
 
@@ -144,6 +138,12 @@ function createContainer(term, depth = 0) {
                 style: `top: ${depth * 1.7}em; z-index: ${100 - depth};`,
                 $: [
                     term['@id'],
+                    term.hasOwnProperty('members')
+                        ? {span: {
+                            class: 'badge bg-warning text-dark',
+                            text: 'Enumeration'
+                        }}
+                        : '',
                     {a: {
                         class: 'material-symbols-outlined',
                         href: 'https://schema.org/' + term['@id'],
@@ -214,7 +214,7 @@ function createContainer(term, depth = 0) {
                 }}
             ));
             term.properties.forEach(propName => {
-                const prop = properties.find(term => term['@id'] === propName);
+                const prop = vocabulary.find(term => term['@id'] === propName);
                 const dl = createElement(
                     {dl: {$: [
                         {dt: {$: [
