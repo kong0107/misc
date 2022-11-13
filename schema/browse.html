@@ -10,30 +10,22 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" crossorigin="anonymous"></script>
     <style>
         body { background-color: #ccc; }
-        [class^=link] { cursor: pointer; }
+        dd { padding-left: 1em; }
+        details { padding: 0 0 .5em .5em; }
+        details[open] { border-left: 1px solid #888; }
+        details[open] > summary:not(:has(.badge)) {
+            position: sticky;
+            background-color: #fff;
+            border-bottom-left-radius: .3em;
+            padding: 0 .2em;
+        }
 
+        [class^=link] { cursor: pointer; }
         .material-symbols-outlined {
             -webkit-user-select: none;
             user-select: none;
             transform: scale(0.8) translate(0, .3em);
             text-decoration: none;
-        }
-        dd {
-            padding-left: 1em;
-            margin-bottom: .3em;
-        }
-        details {
-            margin: .5em 0;
-            padding-left: .5em;
-        }
-        details[open] {
-            border-left: 1px solid #888;
-        }
-        details[open] > summary {
-            position: sticky;
-            background-color: #fff;
-            border-bottom-left-radius: .3em;
-            padding: 0 .2em;
         }
     </style>
 </head>
@@ -75,13 +67,12 @@ const vocabulary = schema['@graph']
             case 'rdfs:comment': {
                 if(typeof value !== 'string') value = value['@value'];
                 let html = '<div>' + marked.parse(value.replace(/\\n/g, '\n')) + '</div>';
-                // html = html.replace(/\[\[(\w+)\]\]/g, '<span class="vocabulary">$1</span>');
+                html = html.replace(/\[\[(\w+)\]\]/g, '<a href="https://schema.org/$1">$1</a>');
                 obj[prop] = parseHTML(html);
                 break;
             }
             // 至多只會有一個值的
             case 'owl:equivalentProperty':
-            case 'rdfs:subClassOf':
             case 'schema:inverseOf':
             case 'schema:isPartOf':
             case 'schema:sameAs':
@@ -93,6 +84,7 @@ const vocabulary = schema['@graph']
             // 有時只有一值，有時是陣列的
             case 'dcterms:source':
             case 'owl:equivalentClass':
+            case 'rdfs:subClassOf':
             case 'rdfs:subPropertyOf':
             case 'schema:domainIncludes':
             case 'schema:rangeIncludes':
@@ -106,11 +98,15 @@ const vocabulary = schema['@graph']
         }
     }
     return obj;
-});
+})
+.sort((a, b) => (a['@id'] < b['@id']) ? -1 : 1);
 
 // 生成想要的資料
 const classes = vocabulary.filter(term => term['@type'].includes('rdfs:Class'));
 const properties = vocabulary.filter(term => term['@type'].includes('rdf:Property'));
+const schemaTerms = vocabulary.filter(term => term['@type'].some(type => type.startsWith('schema:')));
+
+Object.assign(globalThis, {vocabulary, classes, properties, schemaTerms}); // 除錯用
 
 properties.forEach(prop => {
     prop['schema:domainIncludes']?.forEach(className => {
@@ -124,13 +120,18 @@ classes.forEach(c => {
     c.properties?.sort((a, b) => (a < b) ? -1 : 1);
 });
 
+schemaTerms.forEach(term => {
+    const enumName = term['@type'].find(t => t.startsWith('schema:')).split(':')[1];
+    const en = classes.find(c => c['@id'] === enumName);
+    en.members = en.members || [];
+    en.members.push(term['@id']);
+});
 
 // 建立與顯示
-classes
-.sort((a, b) => (a['@id'] < b['@id']) ? -1 : 1)
-.forEach(term => $('main').append(createContainer(term)));
+classes.forEach(term => $('main').append(createContainer(term)));
 
 requestIdleCallback(() => console.timeEnd('load'));
+
 
 /**** 以下是函式宣告 ****/
 
@@ -140,7 +141,7 @@ function createContainer(term, depth = 0) {
     const container = createElement(
         {details: {$: [
             {summary: {
-                style: `top: ${depth * 1.5}em; z-index: ${100 - depth};`,
+                style: `top: ${depth * 1.7}em; z-index: ${100 - depth};`,
                 $: [
                     term['@id'],
                     {a: {
@@ -180,56 +181,126 @@ function createContainer(term, depth = 0) {
         }
 
         if(term.hasOwnProperty('rdfs:subClassOf')) {
-            const parent = term['rdfs:subClassOf'].split(':')[1];
             container.append(createElement(
-                {div: {$: [
-                    {span: {
-                        class: 'badge bg-success',
-                        text: 'subClassOf'
-                    }}
-                ]}}
+                {details: {
+                    open: '',
+                    $: [
+                        {summary: {$: [
+                            {span: {
+                                class: 'badge bg-success',
+                                text: 'subClassOf'
+                            }}
+                        ]}}
+                    ]
+                }}
             ));
-            container.lastChild.append(createContainer(parent, depth + 1));
+            term['rdfs:subClassOf'].forEach(parent => {
+                container.lastChild.append(createContainer(parent.split(':')[1], depth + 1));
+            });
         }
 
-        term.properties?.forEach(propName => {
-            const prop = properties.find(term => term['@id'] === propName);
-            const dl = createElement(
-                {dl: {$: [
-                    {dt: {$: [
-                        propName,
-                        {a: {
-                            class: 'material-symbols-outlined',
-                            href: 'https://schema.org/' + propName,
-                            text: 'open_in_new'
-                        }}
+        if(term.hasOwnProperty('properties')) {
+            container.append(createElement(
+                {details: {
+                    open: '',
+                    $: [
+                        {summary: {$: [
+                            {span: {
+                                class: 'badge bg-primary',
+                                text: 'properties'
+                            }}
+                        ]}}
+                    ]
+                }}
+            ));
+            term.properties.forEach(propName => {
+                const prop = properties.find(term => term['@id'] === propName);
+                const dl = createElement(
+                    {dl: {$: [
+                        {dt: {$: [
+                            propName,
+                            {a: {
+                                class: 'material-symbols-outlined',
+                                href: 'https://schema.org/' + propName,
+                                text: 'open_in_new'
+                            }}
+                        ]}}
                     ]}}
-                ]}}
-            );
-            if(prop.hasOwnProperty('schema:supersededBy')) {
-                const superseder = prop['schema:supersededBy'].split(':')[1];
+                );
+                if(prop.hasOwnProperty('schema:supersededBy')) {
+                    const superseder = prop['schema:supersededBy'].split(':')[1];
+                    dl.append(createElement(
+                        {dd: {$: [
+                            {span: {
+                                class: 'badge bg-danger',
+                                text: 'supersededBy'
+                            }},
+                            superseder
+                        ]}}
+                    ));
+                }
                 dl.append(createElement(
                     {dd: {$: [
-                        {span: {
-                            class: 'badge bg-danger',
-                            text: 'supersededBy'
-                        }},
-                        superseder
+                        prop['rdfs:comment']
                     ]}}
                 ));
-            }
-            dl.append(createElement(
-                {dd: {$: [
-                    prop['rdfs:comment']
-                ]}}
-            ));
-            prop['schema:rangeIncludes'].forEach(type => {
-                const className = type.split(':')[1];
-                dl.append(createElement({tag: 'dd'}));
-                dl.lastChild.append(createContainer(className, depth + 1));
+                prop['schema:rangeIncludes'].forEach(type => {
+                    const className = type.split(':')[1];
+                    dl.append(createElement({tag: 'dd'}));
+                    dl.lastChild.append(createContainer(className, depth + 1));
+                });
+                container.lastChild.append(dl);
             });
-            container.append(dl);
-        });
+        }
+
+        if(term.hasOwnProperty('members')) {
+            container.append(createElement(
+                {details: {
+                    open: '',
+                    $: [
+                        {summary: {$: [
+                            {span: {
+                                class: 'badge bg-info',
+                                text: 'members'
+                            }}
+                        ]}}
+                    ]
+                }}
+            ));
+            term.members.forEach(mName => {
+                const member = vocabulary.find(term => term['@id'] === mName);
+                const dl = createElement(
+                    {dl: {$: [
+                        {dt: {$: [
+                            mName,
+                            {a: {
+                                class: 'material-symbols-outlined',
+                                href: 'https://schema.org/' + mName,
+                                text: 'open_in_new'
+                            }}
+                        ]}}
+                    ]}}
+                );
+                if(member.hasOwnProperty('schema:supersededBy')) {
+                    const superseder = member['schema:supersededBy'].split(':')[1];
+                    dl.append(createElement(
+                        {dd: {$: [
+                            {span: {
+                                class: 'badge bg-danger',
+                                text: 'supersededBy'
+                            }},
+                            superseder
+                        ]}}
+                    ));
+                }
+                dl.append(createElement(
+                    {dd: {$: [
+                        member['rdfs:comment']
+                    ]}}
+                ));
+                container.lastChild.append(dl);
+            });
+        }
 
     }, {once: true});
     return container;
