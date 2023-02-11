@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google 產品類別</title>
+    <style>
+        details {
+            padding-left: 1em;
+            margin: .5em 0 1em;
+            border-left: 1px solid transparent;
+        }
+        details[open] {
+            border-left-color: #ccc;
+        }
+        summary {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Google 產品類別</h1>
+    <main></main>
+    <footer>資料來源：<a href="https://support.google.com/merchants/answer/6324436?hl=zh-Hant">Google</a></footer>
+    <script type="module">
+console.time('load');
+import kongUtil from 'https://cdn.jsdelivr.net/npm/kong-util/mod/all.mjs';
+kongUtil.use();
+
+// 原本想嘗試抓同主機的，沒有的話就抓官方的，但官方的有 CORS 限制。
+const text = await fetchText('taxonomy-with-ids.zh-TW.txt')
+    // .catch(() => fetchText('https://www.google.com/basepages/producttype/taxonomy-with-ids.zh-TW.txt'))
+;
+
+const taxonomy = window.taxonomy = [];
+text.split('\n').forEach(line => {
+    if(line.startsWith('#') || !line) return;
+    const [id, list] = line.split(' - ');
+    let cursor = {children: taxonomy};
+    list.split(' > ').forEach(label => {
+        const target = cursor.children.find(item => item.label === label)
+        if(target) return cursor = target;
+
+        const newItem = {id, label, children: []};
+        cursor.children.push(newItem);
+        cursor = newItem;
+    });
+});
+
+main(taxonomy, $('main'));
+
+function main(taxLayer, container) {
+    taxLayer.forEach(tax => {
+        let elem;
+        if(tax.children.length) {
+            elem = createElement(
+                {details: {
+                    open: '',
+                    $: [
+                        {summary: `${tax.label} (${tax.id})`}
+                    ]
+                }}
+            );
+            main(tax.children, elem);
+        }
+        else elem = createElement({div: `${tax.label} (${tax.id})`});
+        container.append(elem);
+    });
+}
+    </script>
+</body>
+</html>

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>圖片縮放</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/kong-util/dist/all.js" crossorigin="anonymous"></script>
+</head>
+<body class="container">
+    <h1>圖片縮放</h1>
+    <fieldset>
+        <input type="file" title="image" class="form-control">
+        <div class="row my-2">
+            <div class="col-6 col-md-4 col-xl-3">
+                <label class="input-group">
+                    <span class="input-group-text">寬度</span>
+                    <input type="number" id="width_target" value="128" min="1" step="1" class="form-control text-end">
+                    <span class="input-group-text">px</span>
+                </label>
+            </div>
+            <div class="col-6 col-md-4 col-xl-3">
+                <label class="input-group">
+                    <span class="input-group-text">高度</span>
+                    <input type="number" id="height_target" value="128" min="1" step="1" class="form-control text-end">
+                    <span class="input-group-text">px</span>
+                </label>
+            </div>
+            <div class="col-6 col-md-4 col-xl-3">
+                <label class="input-group">
+                    <span class="input-group-text">畫質</span>
+                    <input type="number" id="quality" value="0.9" min="0" max="1" step="0.1" class="form-control text-end">
+                </label>
+            </div>
+        </div>
+        <dl>
+            <dt>輸出類別</dt>
+            <dd id="types" class="row"></dd>
+        </dl>
+    </fieldset>
+    <fieldset id="derived_values" class="d-none">
+        <dl class="row">
+            <dt class="col-2">原圖尺寸</dt>
+            <dd class="col-10">
+                <span id="width_origin"></span>
+                &times;
+                <span id="height_origin"></span>
+            </dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-2">計算結果</dt>
+            <dd class="col-10">
+                <span id="width_calculated"></span>
+                &times;
+                <span id="height_calculated"></span>
+            </dd>
+        </dl>
+    </fieldset>
+    <script>
+kongUtil.use();
+
+// https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types#image_types
+const types = {
+    APNG: 'Animated Portable Network Graphics',
+    AVIF: 'AV1 Image File Format',
+    GIF: 'Graphics Interchange Format',
+    JPEG: 'Joint Photographic Expert Group image',
+    PNG: 'Portable Network Graphics',
+    SVG: 'Scalable Vector Graphics',
+    WebP: 'Web Picture format'
+};
+for(let type in types) {
+    $('#types').append(createElement(
+        {label: {
+            class: 'text-nowrap col-3 col-lg-1',
+            $: [
+                {input: {
+                    type: 'radio',
+                    name: 'type',
+                    value: type
+                }},
+                {abbr: {
+                    title: types[type],
+                    text: type
+                }}
+            ]
+        }}
+    ));
+}
+$('[value="JPEG"]').checked = true;
+
+
+
+listen($('[type=file]'), 'change', async(event) => {
+    $('#derived_values').classList.add('d-none');
+    if(!event.target.files.length) return;
+
+    const file = event.target.files[0];
+    if(!file.type.startsWith('image'))
+        throw new TypeError('Selected file is not an image.');
+
+    const bitmap = await createImageBitmap(file);
+    $('#width_origin').textContent = bitmap.width.toLocaleString();
+    $('#height_origin').textContent = bitmap.height.toLocaleString();
+
+    const ratio = bitmap.width / bitmap.height;
+    let width = parseInt($('#width_target').value),
+        height = parseInt($('#height_target').value);
+    if(width / height > ratio)
+        width = Math.round(height * ratio);
+    else height = Math.round(width / ratio);
+
+    $('#width_calculated').textContent = width.toLocaleString();
+    $('#height_calculated').textContent = height.toLocaleString();
+    $('#derived_values').classList.remove('d-none');
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+
+    const context = canvas.getContext('2d');
+    context.drawImage(bitmap, 0, 0, width, height);
+
+    let type = $('[type="radio"]:checked').value.toLowerCase();
+    if(type === 'svg') type += '+xml';
+    type = 'image/' + type;
+    const quality = parseFloat($('#quality').value);
+
+    const url = canvas.toDataURL(`image/${type}`, parseFloat($('#quality').value));
+    const image = new Image();
+    listen(image, 'load', () => document.body.append(image));
+    image.src = url;
+
+    canvas.toBlob(blob => {
+        const url = URL.createObjectURL(blob);
+        const image = new Image();
+        listen(image, 'load', () => document.body.append(image));
+        image.src = url;
+    }, type, quality);
+});
+
+    </script>
+</body>
+</html>
