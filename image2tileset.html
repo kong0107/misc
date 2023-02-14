@@ -17,32 +17,63 @@
         li {
             margin: 0 2em 1em 0;
         }
+        code {
+            display: block;
+            white-space: pre;
+            overflow: scroll;
+            max-height: 12em;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>image to tileset</h1>
-        <div>
-            <label>
-                tile width
-                <input type="number" min="2" value="16">
-            </label>
-        </div>
-        <div>
-            <label>
-                image file
-                <input type="file">
-            </label>
-            <span id="image-size"></span>
-        </div>
-        <div class="my-2">
-            <progress value="0"></progress>
-            <span id="progress-text"></span>
-            <button type="button" class="d-none btn btn-info btn-sm">Stop</button>
-        </div>
+        <dl class="row">
+            <dt class="col-sm-3 col-lg-2">
+                <label for="tile_width">tile width</label>
+            </dt>
+            <dd class="col-sm-9 col-lg-10">
+                <input id="tile_width" type="number" min="2" value="16">
+            </dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-3 col-lg-2">
+                <label for="imageSource">image file</label>
+            </dt>
+            <dd class="col-sm-9 col-lg-10">
+                <input id="imageSource" type="file">
+                <div id="image-size"></div>
+                <progress class="d-none"></progress>
+                <span id="progress-text"></span>
+            </dd>
+        </dl>
         <canvas id="fullImage" class="d-none"></canvas>
-        <canvas id="tileset"></canvas>
-        <code style="white-space: pre"></code>
+
+        <section id="result" class="d-none">
+            <dl class="row">
+                <dt class="col-sm-3 col-lg-2">
+                    <label for="filename">tileset name</label>
+                </dt>
+                <dd class="col-sm-9 col-lg-10">
+                    <input id="filename" placeholder="filename">
+                </dd>
+            </dl>
+            <div>
+                <a id="dl-image" class="btn btn-sm btn-primary">download tileset</a>
+                <canvas id="tileset" class="d-block"></canvas>
+            </div>
+            <div class="row my-2">
+                <div class="col-sm-6">
+                    <a id="dl-tmx" class="btn btn-sm btn-primary">download tmx</a>
+                    <code id="tmx"></code>
+                </div>
+                <div class="col-sm-6">
+                    <a id="dl-tsx" class="btn btn-sm btn-primary">download tsx</a>
+                    <code id="tsx"></code>
+                </div>
+            </div>
+        </section>
+
         <ol></ol>
     </div>
 
@@ -56,78 +87,84 @@ const map = [];
 const tileset = $('#tileset');
 const tsx = tileset.getContext('2d');
 
-let timerID;
 let bitmap;
 let amount, counter, unique_count;
 let tile_width, tile_height;
 let x, y;
 
-listen($('[type=file]'), 'change', async(event) => {
-    $('ol').replaceChildren();
-    $('progress').value = 0;
-    $('#progress-text').replaceChildren();
+listen($('#imageSource'), 'change', async(event) => {
+    // Initialization: hide things
     $('#image-size').replaceChildren();
-    fullImage.classList.add('d-none');
-    map.splice(0);
-    $('code').replaceChildren();
-    if(!event.target.files.length) return;
+    $('progress').classList.add('d-none');
+    $('#progress-text').replaceChildren();
+    $('#fullImage').classList.add('d-none');
+    $('#result').classList.add('d-none');
+    $('ol').replaceChildren();
 
-    tile_width = tile_height = parseInt($('[type=number]').value);
-
-    const file = event.target.files[0];
-    if(!file.type.startsWith('image'))
-        throw new TypeError('Selected file is not an image.');
+    tile_width = tile_height = parseInt($('#tile_width').value);
+    if(!event.target.files.length || tile_width <= 1) return;
 
     event.target.disabled = true;
-    $('button').disabled = false;
-    $('button').classList.remove('d-none');
-
-    bitmap = await createImageBitmap(file);
+    try {
+        bitmap = await createImageBitmap(event.target.files[0]);
+    }
+    catch {
+        event.target.disabled = false;
+        $('#progress-text').textContent = 'Selected file is not an image.';
+        return;
+    }
     $('#image-size').textContent = bitmap.width + '\u00d7' + bitmap.height;
 
-    fullImage.width = bitmap.width * 2;
-    fullImage.height = bitmap.height * 2;
+    // Prepare to write tileID onto the copy of the full image.
+    fullImage.width = bitmap.width;
+    fullImage.height = bitmap.height;
     fullImage.classList.remove('d-none');
-    fullContext.drawImage(bitmap, 0, 0, bitmap.width, bitmap.height, 0, 0, bitmap.width * 2, bitmap.height * 2);
-    fullContext.font = '16px monospace';
+    fullContext.drawImage(bitmap, 0, 0);
+    fullContext.font =  Math.min(16, tile_width * .75) + 'px monospace';
     fullContext.fillStyle = '#ffffff';
     fullContext.textAlign = 'start';
     fullContext.textBaseline = 'top';
 
-    amount = Math.ceil(bitmap.width / tile_width) * Math.ceil(bitmap.height / tile_height);
+    // Initialization of variables
+    map.splice(0);
     counter = unique_count = 0;
     x = y = 0;
-    timerID = requestIdleCallback(checkTile);
+    amount = Math.ceil(bitmap.width / tile_width) * Math.ceil(bitmap.height / tile_height);
+    $('progress').classList.remove('d-none');
+
+    // Start
+    requestIdleCallback(checkTile);
 });
 
-listen($('button'), 'click', () => {
-    if(timerID) cancelIdleCallback(timerID);
-    timerID = null;
-    $('[type=file]').disabled = false;
-    $('button').disabled = true;
+listen($('#filename'), 'change', event => {
+    const filename = event.target.value.trim() || 'untitled';
+    $('#dl-image').download = filename + '.png';
+    $('#dl-tsx').download = filename + '.tsx';
+    $('#dl-tmx').download = filename + '.tmx';
 });
+
 
 function checkTile() {
+    // Run for at most 65536 pixels in one idle call.
     const step = 65536 / tile_width / tile_height;
 
     for(let i = 0; i < step; ++i) {
         $('progress').value = counter / amount;
-        $('#progress-text').textContent = `${counter} / ${amount}`;
-        if(y >= bitmap.height) return createMap();
+        $('#progress-text').textContent = `${counter} / ${amount} tiles`;
+        if(y >= bitmap.height) return requestIdleCallback(createMap); // Call next step if done parsing.
 
-        const canvas = document.createElement('canvas');
-        canvas.width = tile_width;
-        canvas.height = tile_height;
-
+        // Create a canvas of the current tile.
+        const canvas = createElementFromJsonML(['canvas', {width: tile_width, height: tile_height}]);
         const context = canvas.getContext('2d');
         context.drawImage(bitmap, x, y, tile_width, tile_height, 0, 0, tile_width, tile_height);
-
         const dataURL = canvas.toDataURL('image/png');
         const existed = $(`img[src="${dataURL}"]`);
+
+        // Check if there's already another tile has the same content of the current one.
         let tileId;
         if(existed) tileId = parseInt(existed.dataset.tileId);
         else {
-            tileId = unique_count;
+            tileId = ++unique_count;
             $('ol').append(createElementFromJsonML(
                 ['li', {},
                     ['img', {
@@ -136,11 +173,11 @@ function checkTile() {
                     }]
                 ]
             ));
-            ++unique_count;
         }
         map.push(tileId);
-        fullContext.fillText(tileId.toString(16), x * 2, y * 2);
+        fullContext.fillText(tileId.toString(16), x, y);
 
+        // Calculate the position of the next tile.
         ++counter;
         x += tile_width;
         if(x >= bitmap.width) {
@@ -148,15 +185,15 @@ function checkTile() {
             y += tile_height;
         }
     }
-    timerID = requestIdleCallback(checkTile);
+
+    requestIdleCallback(checkTile);
 }
 
 function createMap() {
-    $('[type=file]').disabled = false;
-    $('button').disabled = true;
-    timerID = null;
-    console.debug(map);
+    const columns = Math.ceil(bitmap.width / tile_width);
+    const rows = Math.ceil(bitmap.height / tile_height);
 
+    // tileset image
     const tiles = $$('ol img');
     tileset.width = tile_width * 16;
     tileset.height = Math.ceil(tiles.length / 16) * tile_height;
@@ -168,16 +205,52 @@ function createMap() {
             tx, ty, tile_width, tile_height
         );
     });
+    $('#dl-image').href = tileset.toDataURL('image/png');
 
-    const columns = Math.ceil(bitmap.width / tile_width);
+    // tsx file
+    let tiletags = '';
+    for(let i = 0; i < unique_count; ++i) tiletags += `\n<tile id="${i}"/>`;
+    $('#tsx').textContent = `<?xml version="1.0" encoding="UTF-8"?>
+        <tileset version="1.9" tiledversion="1.9.2" name="${filename}" tilewidth="${tile_width}" tileheight="${tile_height}" tilecount="${unique_count}" columns="16">
+            <image source="./${filename}.png" trans="000000" width="${tileset.width}" height="${tileset.height}"/>${tiletags}
+        </tileset>
+    `;
+    $('#dl-tsx').href = URL.createObjectURL(
+        new Blob([$('#tsx').textContent], {type: 'application/xml'})
+    );
+
+    // tmx file
+    let csv = '';
     map.forEach((tileId, index) => {
-        $('code').textContent += (tileId + 1) + ',';
-        if(index && !(index % columns)) $('code').textContent += '\n';
+        csv += tileId + ',';
+        if(index && !(index % columns)) csv += '\n';
     });
+    csv = csv.trim().slice(0, -1);
+    $('#tmx').textContent = `<?xml version="1.0" encoding="UTF-8"?>
+        <map version="1.9" tiledversion="1.9.2" orientation="orthogonal" renderorder="right-down" width="${columns}" height="${rows}" tilewidth="${tile_width}" tileheight="${tile_height}" infinite="0" nextlayerid="2" nextobjectid="1">
+            <tileset firstgid="1" source="${filename}.tsx"/>
+            <layer id="1" name="layer 1" width="${columns}" height="${rows}">
+                <data encoding="csv">\n${csv}\n</data>
+            </layer>
+        </map>
+    `;
+    $('#dl-tmx').href = URL.createObjectURL(
+        new Blob([$('#tmx').textContent], {type: 'application/xml'})
+    );
 
-    console.debug('end');
+    // Show result.
+    $('#result').classList.remove('d-none');
+
+    // Revive the file button for user to choose another image.
+    $('#imageSource').disabled = false;
 }
 
+function downloadURL(href, filename) {
+    const link = createElementFromJsonML(['a', {href, filename, class: 'd-none'}]);
+    document.body.append(link);
+    link.click();
+    link.remove();
+}
     </script>
 </body>
 </html>
