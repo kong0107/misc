@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>瑞士制計分表</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/kong-util@0.7.3/dist/all.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/kong-util@0.7.7/dist/all.js"></script>
     <style>
         #final_result {
             margin-top: 2rem;
@@ -24,26 +24,41 @@
 </head>
 <body>
     <div class="container m-3 border border-2 border-info rounded-3 p-3">
-        <details class="text-start">
-            <summary class="mb-2">
-                比賽設定
-            </summary>
+        <details class="text-start" open>
+            <summary class="mb-2">比賽設定</summary>
             <form>
-                <dl class="d-flex">
+                <dl class="d-flex mb-1">
+                    <dt class="d-flex justify-content-center flex-column mb-2">比賽名稱：</dt>
+                    <dd><input id="title" type="text" class="form-control" placeholder="比賽名稱"></dd>
+                </dl>
+                <dl class="d-flex mb-1">
                     <dt class="d-flex justify-content-center flex-column mb-2">人數：</dt>
                     <dd><input id="noplayers" type="number" class="form-control" value="8" min="2"></dd>
                 </dl>
-                <dl class="d-flex">
+                <dl class="d-flex mb-1">
                     <dt class="d-flex justify-content-center flex-column mb-2">輪數：</dt>
                     <dd><input id="norounds" type="number" class="form-control" value="5" min="1"></dd>
                 </dl>
-                <dl class="d-flex">
+                <dl class="d-flex mb-1">
                     <dt class="d-flex justify-content-center flex-column mb-2">勝分：</dt>
                     <dd><input id="win_points" type="number" class="form-control" value="2" min="1"></dd>
                 </dl>
-                <button type="button" class="btn btn-sm btn-primary" id="draw_table">重製對戰表</button>
-                <button type="button" class="btn btn-sm btn-primary" id="add_player">新增1位參賽者</button>
-                <input type="checkbox" checked="checked" id="fastFill"> 開啟快速填分(手機使用者建議關閉)
+                <div>
+                    <button type="button" class="btn btn-sm btn-primary" id="draw_table">重製對戰表</button>
+                    <button type="button" class="btn btn-sm btn-primary" id="add_player">新增1位參賽者</button>
+                    <label>
+                        <input type="checkbox" checked="checked" id="fastFill">
+                        開啟快速填分(手機使用者建議關閉)
+                    </label>
+                </div>
+                <div class="mt-2">
+                    <label>
+                        <input type="file" id="loadJSON" class="d-none"
+                            accept="application/json"
+                        >
+                        <span class="btn btn-sm btn-info">從 JSON 讀取</span>
+                    </label>
+                </div>
             </form>
         </details>
     </div>
@@ -55,818 +70,949 @@
         <thead><tr></tr></thead>
         <tbody></tbody>
     </table>
+    <button type="button" id="downloadJSON" class="btn btn-info">下載 JSON</button>
+    <button type="button" id="downloadCSV" class="btn btn-info">下載 CSV</button>
 
     <script>
-        kongUtil.use();
-        var noplayers;
-        var noplayers_ingame;
-        var norounds;
-        var win_points;
-        var place = [];
-        var taken = [];
-        var final = [];
+kongUtil.use();
 
-        function match(round){
-            noplayers = parseInt($('#noplayers').value);
-            norounds = parseInt($('#norounds').value);
+/********
+ * 全域變數宣告
+ */
+var noplayers;
+var noplayers_ingame;
+var norounds;
+var win_points;
+var place = [];
+var taken = [];
+var final = [];
 
-            if(round==1){
-                for(let i=1;i<=noplayers;++i)
-                    $(`input[data-row="${i}"][data-col="1"][name="oppo"]`).value = i - (i*2-1)%4+2;
-                if(noplayers%2==1){
-                    $(`input[data-row="${noplayers}"][data-col="1"][name="oppo"]`).value = 0;
-                    $(`input[data-row="0"][data-col="1"][name="oppo"]`).value = noplayers;
+
+/********
+ * 函式宣告
+ */
+
+function match(round){
+    noplayers = parseInt($('#noplayers').value);
+    norounds = parseInt($('#norounds').value);
+
+    if(round==1){
+        for(let i=1;i<=noplayers;++i)
+            $(`input[data-row="${i}"][data-col="1"][name="oppo"]`).value = i - (i*2-1)%4+2;
+        if(noplayers%2==1){
+            $(`input[data-row="${noplayers}"][data-col="1"][name="oppo"]`).value = 0;
+            $(`input[data-row="0"][data-col="1"][name="oppo"]`).value = noplayers;
+        }
+        return;
+    }
+
+    //非首輪
+    calTotalpoints(round-1); //從這邊開始寫
+    calSubpoints(round-1);
+    sort();
+
+    taken = [];
+    // var quitgame = 0;
+    noplayers_ingame = 0
+    for(let i=1;i<=noplayers;++i){
+        // if(isIngame(i))
+        //     taken[i] = false;
+        // else{
+        //     taken[i] = true;
+        //     setOppo(i, round, -1);
+        //     ++quitgame;
+        //     console.log(`${i}已退賽`);
+        // }
+        if(isIngame(i)){
+            taken[i] = false;
+            ++noplayers_ingame;
+        }
+        else{
+            taken[i] = true;
+            setOppo(i, round, -1);
+            // ++quitgame;
+            console.log(`${i}已退賽`);
+        }
+    }
+    // noplayers_ingame = noplayers - quitgame;
+    if(noplayers_ingame%2==0) //剩餘參賽人數為偶數
+        taken[0] = true;
+    else
+        taken[0] = false;
+
+    var notables = (noplayers_ingame+noplayers_ingame%2)/2;
+    var table = [];
+    for(let i=1;i<=notables;++i)
+        table[i] = [0, 0];
+
+    for(let i=1;i<=notables;++i){
+        if(i==0){
+            alert('無法配對');
+            return;
+        }
+
+        console.log(`第${i}桌排序中`);
+        pickp0(table, i);
+        if(!pickp1(table, i, round)){
+            taken[table[i][0]] = false;
+            table[i][0] = 0;
+            i -= 2;
+        }
+    }
+
+    //將對手編號填入表格
+    for(let i=1;i<=notables;++i){
+        setOppo(table[i][0], round, table[i][1]);
+        setOppo(table[i][1], round, table[i][0]);
+    }
+    for(let i=1;i<=noplayers;++i){
+        if(!isIngame(i))
+            setOppo(i, round, -1);
+    }
+}
+
+
+function pickp0(table, notable){
+    //尋找place中，排名最小，未taken之選手，置於table[i][0]
+    if(table[notable][0]!=0){
+        console.log('本桌已有p0', notable, table[notable][0]);
+        return;
+    }
+    console.log(`table[${notable}]之p0選取中`);
+    for(let i=1;i<=noplayers;++i){
+        if(taken[place[i]]==false){
+            table[notable][0] = place[i];
+            taken[place[i]] = true;
+            console.log('p0 in table '+notable+' is '+place[i]);
+            return;
+        }
+    }
+}
+
+
+function pickp1(table, notable, round){
+    //尋找place中，排名最小，未taken，未與table[i][0]對戰過之選手，置於table[i][1]
+    var p;
+    var p1;
+    var start_place;
+    var oppo;
+
+    //clean table
+    for(let i=1;i<=noplayers;++i)
+        setOppo(i, round, '');
+
+    if(table[notable][1]==0){
+        p = table[notable][0];
+    }
+    else{
+        p = table[notable][1];
+        taken[p] = false;
+        table[notable][1] = 0;
+    }
+    start_place = $(`[name="place"][data-row="${p}"]`).value;
+    start_place = parseInt(start_place);
+
+    for(let i=start_place+1;i<=noplayers+1;++i){
+        if(taken[place[i]]==false){
+            p1 = place[i];
+            for(let j=1;j<=norounds;++j){
+                oppo = getOppo(table[notable][0], j);
+                if(isNaN(oppo)){
+                    // 找到了
+                    table[notable][1] = p1;
+                    taken[p1] = true;
+                    console.log(`本桌p1為${p1}`);
+                    return true;
                 }
-                return;
-            }
-
-            //非首輪
-            calTotalpoints(round-1); //從這邊開始寫
-            calSubpoints(round-1);
-            sort();
-
-            taken = [];
-            // var quitgame = 0;
-            noplayers_ingame = 0
-            for(let i=1;i<=noplayers;++i){
-                // if(isIngame(i))
-                //     taken[i] = false;
-                // else{
-                //     taken[i] = true;
-                //     setOppo(i, round, -1);
-                //     ++quitgame;
-                //     console.log(`${i}已退賽`);
-                // }
-                if(isIngame(i)){
-                    taken[i] = false;
-                    ++noplayers_ingame;
-                }
-                else{
-                    taken[i] = true;
-                    setOppo(i, round, -1);
-                    // ++quitgame;
-                    console.log(`${i}已退賽`);
-                }
-            }
-            // noplayers_ingame = noplayers - quitgame;
-            if(noplayers_ingame%2==0) //剩餘參賽人數為偶數
-                taken[0] = true;
-            else
-                taken[0] = false;
-
-            var notables = (noplayers_ingame+noplayers_ingame%2)/2;
-            var table = [];
-            for(let i=1;i<=notables;++i)
-                table[i] = [0, 0];
-
-            for(let i=1;i<=notables;++i){
-                if(i==0){
-                    alert('無法配對');
-                    return;
-                }
-
-                console.log(`第${i}桌排序中`);
-                pickp0(table, i);
-                if(!pickp1(table, i, round)){
-                    taken[table[i][0]] = false;
-                    table[i][0] = 0;
-                    i -= 2;
-                }
-            }
-
-            //將對手編號填入表格
-            for(let i=1;i<=notables;++i){
-                setOppo(table[i][0], round, table[i][1]);
-                setOppo(table[i][1], round, table[i][0]);
-            }
-            for(let i=1;i<=noplayers;++i){
-                if(!isIngame(i))
-                    setOppo(i, round, -1);
+                if(oppo == p1)
+                    break;
             }
         }
-        function pickp0(table, notable){
-            //尋找place中，排名最小，未taken之選手，置於table[i][0]
-            if(table[notable][0]!=0){
-                console.log('本桌已有p0', notable, table[notable][0]);
-                return;
-            }
-            console.log(`table[${notable}]之p0選取中`);
-            for(let i=1;i<=noplayers;++i){
-                if(taken[place[i]]==false){
-                    table[notable][0] = place[i];
-                    taken[place[i]] = true;
-                    console.log('p0 in table '+notable+' is '+place[i]);
-                    return;
-                }
+    }
+    //輪空確認
+    // if(noplayers_ingame%2==1){
+    //     const notables = (noplayers_ingame+noplayers_ingame%2)/2;
+    //     if(neverPass(table[notables][0])){
+    //         taken[table[notables][0]] = true;
+    //         return true;
+    //     }
+    // }
+    //沒找到p1
+    return false;
+}
+
+
+function calTotalpoints(round){
+    var total;
+    for(let i=1;i<=noplayers;++i){
+        total = 0;
+        for(let j=1;j<=round;++j){
+            points = getPoints(i, j);
+            if(!isNaN(points))
+                total += points;
+        }
+        $(`input[data-row="${i}"][name="totalpoints"]`).value = total;
+    }
+}
+
+
+function calSubpoints(round){
+    var sub;
+    var nooppo;
+    for(let i=1;i<=noplayers;++i){
+        sub = 0;
+        for(let j=1;j<=round;++j){
+            //取得第j輪對手的編號
+            nooppo = getOppo(i, j);
+            //取得第j輪對手的總分, 加入sub
+            if(!isNaN(nooppo) && nooppo>0 && nooppo<=noplayers)
+                sub += getTotalpoints(nooppo);
+        }
+        $(`input[data-row="${i}"][name="subpoints"]`).value = sub;
+    }
+}
+
+
+function sort(){ //Selection Sort
+    place = [];
+    place[noplayers+1] = 0;
+    // $(`[name="place"][data-row="0"]`).value = noplayers+1;
+    for(let i=1;i<=noplayers;++i)
+        place[i] = i;
+    for(let i=1;i<=noplayers;++i){
+        for(let j=i+1;j<=noplayers;++j){
+            if(compare(place[j], place[i])){
+                temp = place[j];
+                place[j] = place[i];
+                place[i] = temp;
             }
         }
-        function pickp1(table, notable, round){
-            //尋找place中，排名最小，未taken，未與table[i][0]對戰過之選手，置於table[i][1]
-            var p;
-            var p1;
-            var start_place;
-            var oppo;
+        $(`[name="place"][data-row="${place[i]}"]`).value = i;
+    }
+    return;
+}
 
-            //clean table
-            for(let i=1;i<=noplayers;++i)
-                setOppo(i, round, '');
 
-            if(table[notable][1]==0){
-                p = table[notable][0];
-            }
-            else{
-                p = table[notable][1];
-                taken[p] = false;
-                table[notable][1] = 0;
-            }
-            start_place = $(`[name="place"][data-row="${p}"]`).value;
-            start_place = parseInt(start_place);
+function compare(x, y){ //for sort()
+    if(getTotalpoints(x)>getTotalpoints(y)) return 1;
+    if(getTotalpoints(x)<getTotalpoints(y)) return 0;
+    if(getSubpoints(x)>getSubpoints(y)) return 1;
+    if(getSubpoints(x)<getSubpoints(y)) return 0;
+    if(x<=y) return 1;
+    return 0;
+}
 
-            for(let i=start_place+1;i<=noplayers+1;++i){
-                if(taken[place[i]]==false){
-                    p1 = place[i];
-                    for(let j=1;j<=norounds;++j){
-                        oppo = getOppo(table[notable][0], j);
-                        if(isNaN(oppo)){
-                            // 找到了
-                            table[notable][1] = p1;
-                            taken[p1] = true;
-                            console.log(`本桌p1為${p1}`);
-                            return true;
-                        }
-                        if(oppo == p1)
-                            break;
-                    }
-                }
-            }
-            //輪空確認
-            // if(noplayers_ingame%2==1){
-            //     const notables = (noplayers_ingame+noplayers_ingame%2)/2;
-            //     if(neverPass(table[notables][0])){
-            //         taken[table[notables][0]] = true;
-            //         return true;
-            //     }
-            // }
-            //沒找到p1
+
+function lock(round){
+    if(round==1){
+        for(let i=1;i<=noplayers;++i){
+            $(`input[name=pname][data-row="${i}"]`).disabled = true;
+        }
+        $('#btn_draw').hidden = "hidden";
+        $(`button[name=btn_unlock][data-col="0"]`).hidden = "";
+    }
+    for(let i=1;i<=noplayers;++i){
+        $(`input[name=pname][data-row="${i}"]`).disabled = true;
+        $('#btn_draw').hidden = "hidden";
+        $(`button[name=btn_unlock][data-col="0"]`).hidden = "";
+        for(let j=1;j<round;++j){
+            $(`input[name=points][data-row="${i}"][data-col="${j}"]`).disabled = true;
+            $(`input[name=oppo][data-row="${i}"][data-col="${j}"]`).disabled = true;
+            $(`button[name=btn_match][data-col="${j}"]`).hidden = "hidden";
+            $(`button[name=btn_unlock][data-col="${j}"]`).hidden = "";
+        }
+    }
+}
+
+
+function unlock(round){
+    if(round==0){
+        for(let i=1;i<=noplayers;++i){
+            $(`input[name=pname][data-row="${i}"]`).disabled = false;
+        }
+        $('#btn_draw').hidden = "";
+        $(`button[name=btn_unlock][data-col="0"]`).hidden = "hidden";
+    }
+    else{
+        for(let i=1;i<=noplayers;++i){
+            $(`input[name=points][data-row="${i}"][data-col="${round}"]`).disabled = false;
+            $(`input[name=oppo][data-row="${i}"][data-col="${round}"]`).disabled = false;
+            $(`button[name=btn_match][data-col="${round}"]`).hidden = "";
+            $(`button[name=btn_unlock][data-col="${round}"]`).hidden = "hidden";
+        }
+    }
+}
+
+
+//確認某選手是否在比賽中
+function isIngame(player){
+    if(isNaN(player))
+        return console.log('Error isIngame');
+    const target = $(`input[name="ingame"][data-row="${player}"]`);
+    if(target)
+        return target.checked;
+}
+
+function getPoints(player, round) {
+    if(isNaN(player))
+        return console.log('Error getPoints');
+    const target = $(`input[name="points"][data-row="${player}"][data-col="${round}"]`);
+    if(target)
+        return parseInt(target.value);
+}
+
+function getOppo(player, round) {
+    if(isNaN(player))
+        return console.log('Error getOppo');
+    const target = $(`input[name="oppo"][data-row="${player}"][data-col="${round}"]`);
+    if(target)
+        return parseInt(target.value);
+}
+
+function getTotalpoints(player){
+    if(isNaN(player))
+        return console.log('Error getTotalpoints');
+    const target = $(`input[name="totalpoints"][data-row="${player}"]`);
+    if(target)
+        return parseInt(target.value);
+}
+
+function getSubpoints(player){
+    if(isNaN(player))
+        return console.log('Error getSubpoints');
+    const target = $(`input[name="subpoints"][data-row="${player}"]`);
+    if(target)
+        return parseInt(target.value);
+}
+
+function setPoints(player, round, points) {
+    if(isNaN(player)) return console.error('aaaa');
+    const target = $(`input[name="points"][data-row="${player}"][data-col="${round}"]`);
+    if(target) target.value = points;
+}
+
+function setOppo(player, round, oppo) {
+    if(isNaN(player))
+        return console.log('Error Oppo');
+    const target = $(`input[name="oppo"][data-row="${player}"][data-col="${round}"]`);
+    if(target)
+        target.value = oppo;
+}
+
+function draw(){
+    noplayers = parseInt($('#noplayers').value);
+    for(let i=1;i<=noplayers;++i){
+        target = Math.floor(Math.random()*noplayers)+1;
+        console.log(`going to swap ${i} and ${target}`);
+        temp = $(`input[name="pname"][data-row="${i}"]`).value;
+        $(`input[name="pname"][data-row="${i}"]`).value = $(`input[name="pname"][data-row="${target}"]`).value;
+        $(`input[name="pname"][data-row="${target}"]`).value = temp;
+    }
+}
+
+function clickWin(row, col){
+    const oppo = getOppo(row, col);
+    win_points = parseInt($('#win_points').value);
+    if(oppo==0){
+        setPoints(row, col, win_points);
+        $(`input[name="points"][data-row="${row}"][data-col="${col}"]`).parentNode.style.backgroundColor = '#FF0000';
+    }
+    if(oppo==-1) setPoints(row, col, 0);
+    if(oppo>0 && oppo<=noplayers){
+        const points = win_points;
+        setPoints(row, col, win_points);
+        setPoints(oppo, col, 0);
+        $(`input[name="points"][data-row="${row}"][data-col="${col}"]`).parentNode.style.backgroundColor = '#FF0000';
+        $(`input[name="points"][data-row="${oppo}"][data-col="${col}"]`).parentNode.style.backgroundColor = '#FFFFFF';
+    }
+}
+
+function clickEven(row, col){
+    const oppo = getOppo(row, col);
+    win_points = parseInt($('#win_points').value);
+    if(oppo==0){
+        setPoints(row, col, win_points);
+        $(`input[name="points"][data-row="${row}"][data-col="${col}"]`).parentNode.style.backgroundColor = '#FF0000';
+    }
+    if(oppo==-1) setPoints(row, col, 0);
+    if(oppo>0 && oppo<=noplayers){
+        setPoints(row, col, win_points/2);
+        setPoints(oppo, col, win_points/2);
+        $(`input[name="points"][data-row="${row}"][data-col="${col}"]`).parentNode.style.backgroundColor = '#FF80FF';
+        $(`input[name="points"][data-row="${oppo}"][data-col="${col}"]`).parentNode.style.backgroundColor = '#FF80FF';
+    }
+}
+
+function showNextBtn(round){
+    round = parseInt(round);
+    if(round<=norounds && allPointsReady(round)){
+        if(round<norounds)
+            $(`button[data-col="${round+1}"]`).hidden = "";
+    }
+}
+
+function allPointsReady(round){
+    for(let i=1;i<=noplayers;++i){
+        if(isNaN(getPoints(i,round)))
             return false;
-        }
-        function calTotalpoints(round){
-            var total;
-            for(let i=1;i<=noplayers;++i){
-                total = 0;
-                for(let j=1;j<=round;++j){
-                    points = getPoints(i, j);
-                    if(!isNaN(points))
-                        total += points;
-                }
-                $(`input[data-row="${i}"][name="totalpoints"]`).value = total;
-            }
-        }
-        function calSubpoints(round){
-            var sub;
-            var nooppo;
-            for(let i=1;i<=noplayers;++i){
-                sub = 0;
-                for(let j=1;j<=round;++j){
-                    //取得第j輪對手的編號
-                    nooppo = getOppo(i, j);
-                    //取得第j輪對手的總分, 加入sub
-                    if(!isNaN(nooppo) && nooppo>0 && nooppo<=noplayers)
-                        sub += getTotalpoints(nooppo);
-                }
-                $(`input[data-row="${i}"][name="subpoints"]`).value = sub;
-            }
-        }
-        function sort(){ //Selection Sort
-            place = [];
-            place[noplayers+1] = 0;
-            // $(`[name="place"][data-row="0"]`).value = noplayers+1;
-            for(let i=1;i<=noplayers;++i)
-                place[i] = i;
-            for(let i=1;i<=noplayers;++i){
-                for(let j=i+1;j<=noplayers;++j){
-                    if(compare(place[j], place[i])){
-                        temp = place[j];
-                        place[j] = place[i];
-                        place[i] = temp;
-                    }
-                }
-                $(`[name="place"][data-row="${place[i]}"]`).value = i;
-            }
-            return;
-        }
-        function compare(x, y){ //for sort()
-            if(getTotalpoints(x)>getTotalpoints(y)) return 1;
-            if(getTotalpoints(x)<getTotalpoints(y)) return 0;
-            if(getSubpoints(x)>getSubpoints(y)) return 1;
-            if(getSubpoints(x)<getSubpoints(y)) return 0;
-            if(x<=y) return 1;
-            return 0;
-        }
-        function lock(round){
-            if(round==1){
-                for(let i=1;i<=noplayers;++i){
-                    $(`input[name=pname][data-row="${i}"]`).disabled = true;
-                }
-                $('#btn_draw').hidden = "hidden";
-                $(`button[name=btn_unlock][data-col="0"]`).hidden = "";
-            }
-            for(let i=1;i<=noplayers;++i){
-                $(`input[name=pname][data-row="${i}"]`).disabled = true;
-                $('#btn_draw').hidden = "hidden";
-                $(`button[name=btn_unlock][data-col="0"]`).hidden = "";
-                for(let j=1;j<round;++j){
-                    $(`input[name=points][data-row="${i}"][data-col="${j}"]`).disabled = true;
-                    $(`input[name=oppo][data-row="${i}"][data-col="${j}"]`).disabled = true;
-                    $(`button[name=btn_match][data-col="${j}"]`).hidden = "hidden";
-                    $(`button[name=btn_unlock][data-col="${j}"]`).hidden = "";
-                }
-            }
-        }
-        function unlock(round){
-            if(round==0){
-                for(let i=1;i<=noplayers;++i){
-                    $(`input[name=pname][data-row="${i}"]`).disabled = false;
-                }
-                $('#btn_draw').hidden = "";
-                $(`button[name=btn_unlock][data-col="0"]`).hidden = "hidden";
-            }
-            else{
-                for(let i=1;i<=noplayers;++i){
-                    $(`input[name=points][data-row="${i}"][data-col="${round}"]`).disabled = false;
-                    $(`input[name=oppo][data-row="${i}"][data-col="${round}"]`).disabled = false;
-                    $(`button[name=btn_match][data-col="${round}"]`).hidden = "";
-                    $(`button[name=btn_unlock][data-col="${round}"]`).hidden = "hidden";
-                }
-            }
-        }
+    }
+    return true;
+}
 
-        //確認某選手是否在比賽中
-        function isIngame(player){
-            if(isNaN(player))
-                return console.log('Error isIngame');
-            const target = $(`input[name="ingame"][data-row="${player}"]`);
-            if(target)
-                return target.checked;
-        }
-        function getPoints(player, round) {
-            if(isNaN(player))
-                return console.log('Error getPoints');
-            const target = $(`input[name="points"][data-row="${player}"][data-col="${round}"]`);
-            if(target)
-                return parseInt(target.value);
-        }
-        function getOppo(player, round) {
-            if(isNaN(player))
-                return console.log('Error getOppo');
-            const target = $(`input[name="oppo"][data-row="${player}"][data-col="${round}"]`);
-            if(target)
-                return parseInt(target.value);
-        }
-        function getTotalpoints(player){
-            if(isNaN(player))
-                return console.log('Error getTotalpoints');
-            const target = $(`input[name="totalpoints"][data-row="${player}"]`);
-            if(target)
-                return parseInt(target.value);
-        }
-        function getSubpoints(player){
-            if(isNaN(player))
-                return console.log('Error getSubpoints');
-            const target = $(`input[name="subpoints"][data-row="${player}"]`);
-            if(target)
-                return parseInt(target.value);
-        }
-        function setPoints(player, round, points) {
-            if(isNaN(player)) return console.error('aaaa');
-            const target = $(`input[name="points"][data-row="${player}"][data-col="${round}"]`);
-            if(target) target.value = points;
-        }
-        function setOppo(player, round, oppo) {
-            if(isNaN(player))
-                return console.log('Error Oppo');
-            const target = $(`input[name="oppo"][data-row="${player}"][data-col="${round}"]`);
-            if(target)
-                target.value = oppo;
-        }
-        function draw(){
-            noplayers = parseInt($('#noplayers').value);
-            for(let i=1;i<=noplayers;++i){
-                target = Math.floor(Math.random()*noplayers)+1;
-                console.log(`going to swap ${i} and ${target}`);
-                temp = $(`input[name="pname"][data-row="${i}"]`).value;
-                $(`input[name="pname"][data-row="${i}"]`).value = $(`input[name="pname"][data-row="${target}"]`).value;
-                $(`input[name="pname"][data-row="${target}"]`).value = temp;
+function sortResult(){
+    place = [];
+    for(let i=1;i<=noplayers;++i)
+        place[i] = i;
+    for(let i=1;i<=noplayers;++i){
+        for(let j=i+1;j<=noplayers;++j){
+            if(compareResult(place[j], place[i])){
+                temp = place[j];
+                place[j] = place[i];
+                place[i] = temp;
             }
         }
-        function clickWin(row, col){
-            const oppo = getOppo(row, col);
-            win_points = parseInt($('#win_points').value);
-            if(oppo==0){
-                setPoints(row, col, win_points);
-                $(`input[name="points"][data-row="${row}"][data-col="${col}"]`).parentNode.style.backgroundColor = '#FF0000';
-            }
-            if(oppo==-1) setPoints(row, col, 0);
-            if(oppo>0 && oppo<=noplayers){
-                const points = win_points;
-                setPoints(row, col, win_points);
-                setPoints(oppo, col, 0);
-                $(`input[name="points"][data-row="${row}"][data-col="${col}"]`).parentNode.style.backgroundColor = '#FF0000';
-                $(`input[name="points"][data-row="${oppo}"][data-col="${col}"]`).parentNode.style.backgroundColor = '#FFFFFF';
-            }
-        }
-        function clickEven(row, col){
-            const oppo = getOppo(row, col);
-            win_points = parseInt($('#win_points').value);
-            if(oppo==0){
-                setPoints(row, col, win_points);
-                $(`input[name="points"][data-row="${row}"][data-col="${col}"]`).parentNode.style.backgroundColor = '#FF0000';
-            }
-            if(oppo==-1) setPoints(row, col, 0);
-            if(oppo>0 && oppo<=noplayers){
-                setPoints(row, col, win_points/2);
-                setPoints(oppo, col, win_points/2);
-                $(`input[name="points"][data-row="${row}"][data-col="${col}"]`).parentNode.style.backgroundColor = '#FF80FF';
-                $(`input[name="points"][data-row="${oppo}"][data-col="${col}"]`).parentNode.style.backgroundColor = '#FF80FF';
-            }
-        }
-        function showNextBtn(round){
-            round = parseInt(round);
-            if(round<=norounds && allPointsReady(round)){
-                if(round<norounds)
-                    $(`button[data-col="${round+1}"]`).hidden = "";
-            }
-        }
-        function allPointsReady(round){
-            for(let i=1;i<=noplayers;++i){
-                if(isNaN(getPoints(i,round)))
-                    return false;
-            }
-            return true;
-        }
-        function sortResult(){
-            place = [];
-            for(let i=1;i<=noplayers;++i)
-                place[i] = i;
-            for(let i=1;i<=noplayers;++i){
-                for(let j=i+1;j<=noplayers;++j){
-                    if(compareResult(place[j], place[i])){
-                        temp = place[j];
-                        place[j] = place[i];
-                        place[i] = temp;
-                    }
-                }
-                final[place[i]]['place'] = i;
-            }
-            return;
-        }
-        function compareResult(x, y){
-            if(final[x]['total']>final[y]['total']) return 1;
-            if(final[x]['total']<final[y]['total']) return 0;
-            if(final[x]['sub1']>final[y]['sub1']) return 1;
-            if(final[x]['sub1']<final[y]['sub1']) return 0;
-            if(final[x]['sub2']>final[y]['sub2']) return 1;
-            if(final[x]['sub2']<final[y]['sub2']) return 0;
-            if(final[x]['sub4']>final[y]['sub4']) return 1;
-            if(final[x]['sub4']<final[y]['sub4']) return 0;
-            if(final[x]['sub5']>final[y]['sub5']) return 1;
-            if(final[x]['sub5']<final[y]['sub5']) return 0;
-            if(final[x]['sub6']>final[y]['sub6']) return 1;
-            if(final[x]['sub6']<final[y]['sub6']) return 0;
-            if(final[x]['sub7']>final[y]['sub7']) return 1;
-            if(final[x]['sub7']<final[y]['sub7']) return 0;
-            if(x<y) return 1;
-            return 0;
-        }
-        function outputResult(){
-            win_points = parseInt($('#win_points').value);
+        final[place[i]]['place'] = i;
+    }
+    return;
+}
 
-            //取得總分&輔一
-            for(let i=1;i<=noplayers;++i){
-                final[i] = [];
-                final[i]['total'] = parseInt($(`input[name="totalpoints"][data-row="${i}"]`).value);
-                final[i]['sub1'] = parseInt($(`input[name="subpoints"][data-row="${i}"]`).value);
+function compareResult(x, y){
+    if (final[x]['total'] > final[y]['total']) return 1;
+    if (final[x]['total'] < final[y]['total']) return 0;
+
+    for (let i = 1; i <= 7; ++i) {
+        if (i === 3) continue;
+        if (final[x][`sub${i}`] < final[y][`sub${i}`]) return 1;
+        if (final[x][`sub${i}`] > final[y][`sub${i}`]) return 0;
+    }
+
+    if (x < y) return 1;
+    return 0;
+}
+
+function outputResult(){
+    win_points = parseInt($('#win_points').value);
+
+    //取得總分&輔一
+    for(let i=1;i<=noplayers;++i){
+        final[i] = {};
+        final[i]['total'] = parseInt($(`input[name="totalpoints"][data-row="${i}"]`).value);
+        final[i]['sub1'] = parseInt($(`input[name="subpoints"][data-row="${i}"]`).value);
+    }
+    //計算輔二
+    var oppo = 0; //對手編號
+    var oppototal = 0; //對手
+    var p = 0;
+    for(let i=1;i<=noplayers;++i){
+        final[i]['sub2'] = 0;
+        for(let j=1;j<=norounds;++j){
+            oppo = getOppo(i, j); // oppo = i 選手第 j 輪之對手
+            if(oppo>0){ //對手編號>0 => 正常對戰，無輪空、無棄戰
+                p = getPoints(i, j); // p = i 選手第 j 輪之得分
+                if(p>0){ //此選手獲勝或平手
+                    final[i]['sub2'] += ((final[oppo]['total'])*p/win_points);
+                    console.log(`${i}選手之輔二變更為 ${final[i]['sub2']}`);
+                }
             }
-            //計算輔二
-            var oppo = 0; //對手編號
-            var oppototal = 0; //對手
-            var p = 0;
-            for(let i=1;i<=noplayers;++i){
-                final[i]['sub2'] = 0;
-                for(let j=1;j<=norounds;++j){
-                    oppo = getOppo(i, j); // oppo = i 選手第 j 輪之對手
-                    if(oppo>0){ //對手編號>0 => 正常對戰，無輪空、無棄戰
-                        p = getPoints(i, j); // p = i 選手第 j 輪之得分
-                        if(p>0){ //此選手獲勝或平手
-                            final[i]['sub2'] += ((final[oppo]['total'])*p/win_points);
-                            console.log(`${i}選手之輔二變更為 ${final[i]['sub2']}`);
+        }
+    }
+    // 計算輔四 => 所遇對手之輔分一
+    for(let i=1;i<=noplayers;++i){
+        final[i]['sub4'] = 0;
+        for(let j=1;j<=norounds;++j){
+            oppo = getOppo(i, j);
+            if(oppo>0){
+                final[i]['sub4'] += final[oppo]['sub1'];
+            }
+        }
+    }
+    // 計算輔五 => 所遇對手之輔分二
+    for(let i=1;i<=noplayers;++i){
+        final[i]['sub5'] = 0;
+        for(let j=1;j<=norounds;++j){
+            oppo = getOppo(i, j);
+            if(oppo>0){
+                final[i]['sub5'] += final[oppo]['sub2'];
+            }
+        }
+    }
+    // 輔六：（所勝對手之輔分一）＋（所和對手之輔分一的一半）
+    for(let i=1;i<=noplayers;++i){
+        final[i]['sub6'] = 0;
+        for(let j=1;j<=norounds;++j){
+            p = getPoints(i, j);
+            oppo = getOppo(i, j);
+            if(p>0 && oppo>0){
+                final[i]['sub6'] += (final[j]['sub1'] * p / win_points);
+            }
+        }
+    }
+    // 輔七：（所勝對手之輔分二）＋（所和對手之輔分二的一半）
+    for(let i=1;i<=noplayers;++i){
+        final[i]['sub7'] = 0;
+        for(let j=1;j<=norounds;++j){
+            p = getPoints(i, j);
+            oppo = getOppo(i, j);
+            if(p>0 && oppo>0){
+                final[i]['sub7'] += (final[j]['sub2'] * p / win_points);
+            }
+        }
+    }
+    sortResult();
+
+    console.log(final);
+
+    //顯示final result
+    $('#final_result thead').replaceChildren(
+        createElementFromJsonML(
+            ['tr', {},
+                ['th',{class: 'rounded'},'編號'],
+                ['th',{class: 'rounded'},'姓名'],
+                ['th',{class: 'rounded'},'總分'],
+                ['th',{class: 'rounded'},'輔一'],
+                ['th',{class: 'rounded'},'輔二'],
+                ['th',{class: 'rounded'},'輔四'],
+                ['th',{class: 'rounded'},'輔五'],
+                ['th',{class: 'rounded'},'輔六'],
+                ['th',{class: 'rounded'},'輔七'],
+                ['th',{class: 'rounded'},'名次']
+            ]
+        )
+    );
+
+    $('#final_result tbody').replaceChildren();
+    for(let i=1;i<=noplayers;++i){
+        pname = $(`input[name=pname][data-row="${i}"]`).value;
+        $('#final_result tbody').append(
+            createElementFromJsonML(
+                ['tr', {},
+                    ['td',{class: 'rounded'},i],
+                    ['td',{class: 'rounded'},pname],
+                    ['td',{class: 'rounded'},final[i]['total']],
+                    ['td',{class: 'rounded'},final[i]['sub1']],
+                    ['td',{class: 'rounded'},final[i]['sub2']],
+                    ['td',{class: 'rounded'},final[i]['sub4']],
+                    ['td',{class: 'rounded'},final[i]['sub5']],
+                    ['td',{class: 'rounded'},final[i]['sub6']],
+                    ['td',{class: 'rounded'},final[i]['sub7']],
+                    ['td',{class: 'rounded'},final[i]['place']]
+                ]
+            )
+        );
+    }
+}
+
+function hideRow0(){
+    /** 不知道為何失效的程式碼
+    $$('[data-row="0"]').forEach( element => {
+        element.hidden = "hidden";
+    });
+    */
+
+    $('#main tbody tr').style.display = "none";
+
+}
+
+//新增選手
+function addPlayer() {
+    norounds = parseInt($('#norounds').value);
+    noplayers = parseInt($('#noplayers').value);
+    ++noplayers;
+    $('#noplayers').value = noplayers;
+    $(`input[data-row="0"][name="place"]`).value = noplayers+1;
+
+    const tr =
+        ['tr',{},
+            ['td', {class: 'text-end'}, noplayers],
+            ['td', {},
+                ['input', {
+                    type: 'checkbox',
+                    class: 'form-check-input',
+                    checked: 'checked',
+                    name: 'ingame',
+                    title: '勾選表示未退賽',
+                    'data-row': noplayers
+                }]
+            ],
+            ['td', {},
+                ['input', {
+                    type: 'text',
+                    name: 'pname',
+                    class: 'form-control',
+                    'data-row': noplayers
+                }]
+            ]
+        ];
+
+    for(let i=1;i<=norounds;++i){
+        tr.push(
+            ['td',{class: 'round'},
+                ['div',{class: 'd-flex justify-content-around rounded'},
+                    ['input', {
+                        type: 'number',
+                        class: 'form-control d-inline text-center m-1',
+                        style: 'width: 45%',
+                        title: `${noplayers}號選手第${i}輪之對手`,
+                        name: 'oppo',
+                        'data-row': noplayers,
+                        'data-col': i
+                    }], // input
+                    ['input', {
+                        type: 'number',
+                        class: 'form-control d-inline text-center m-1',
+                        style: 'width: 45%',
+                        name: 'points',
+                        autocomplete: 'off',
+                        title: '獲勝左鍵，平手右鍵',
+                        'data-row': noplayers,
+                        'data-col': i,
+                        onclick: event => {
+                            if($('#fastFill').checked)
+                                clickWin(event.target.dataset.row, event.target.dataset.col);
+                            showNextBtn(event.target.dataset.col);
+                        },
+                        oncontextmenu: event => {
+                            event.preventDefault();
+                            if($('#fastFill').checked)
+                                clickEven(event.target.dataset.row, event.target.dataset.col);
+                            showNextBtn(event.target.dataset.col);
+                        },
+                        oninput: event => {
+                            showNextBtn(event.target.dataset.col);
                         }
-                    }
+                    }] // input
+                ] // div
+            ]
+        );
+    }
+
+    tr.push(
+        ['td', {},
+            ['input', {
+                type: 'number',
+                class: 'form-control d-inline text-center',
+                name: 'totalpoints',
+                'data-row': noplayers,
+                style: 'width: 33%'
+            }],
+            ['input', {
+                type: 'number',
+                class: 'form-control d-inline text-center',
+                name: 'subpoints',
+                'data-row': noplayers,
+                style: 'width: 33%'
+            }],
+            ['input', {
+                type: 'number',
+                class: 'form-control d-inline text-center',
+                name: 'place',
+                'data-row': noplayers,
+                style: 'width: 33%'
+            }]
+        ]
+    );
+
+    $('tbody').appendChild(createElementFromJsonML(tr));
+}
+
+function drawTable() {
+    if ($('#main tbody').childElementCount > 0
+        && !confirm('確認要清空並重製一個新的對戰紀錄表嗎？')
+    ) return false;
+
+    const noplayers = parseInt($('#noplayers').value);
+    const norounds = parseInt($('#norounds').value);
+
+    $('thead tr').replaceChildren(
+        createElementFromJsonML(['th']),
+        createElementFromJsonML(['th']),
+        createElementFromJsonML(['th', {class: 'text-center'},
+            ['button', {
+                type: 'button',
+                class: 'btn btn-sm btn-primary',
+                id: 'btn_draw',
+                onclick: event => {
+                    console.log('開始抽籤');
+                    console.log(parseInt($('#noplayers').value));
+                    draw();
                 }
-            }
-            // 計算輔四 => 所遇對手之輔分一
-            for(let i=1;i<=noplayers;++i){
-                final[i]['sub4'] = 0;
-                for(let j=1;j<=norounds;++j){
-                    oppo = getOppo(i, j);
-                    if(oppo>0){
-                        final[i]['sub4'] += final[oppo]['sub1'];
-                    }
+            }, '抽籤'],
+            ['button',{
+                type: 'button',
+                class: 'btn btn-sm btn-secondary',
+                name: 'btn_unlock',
+                'data-col': '0',
+                hidden: 'hidden',
+                onclick: event => {
+                    unlock(0);
                 }
-            }
-            // 計算輔五 => 所遇對手之輔分二
-            for(let i=1;i<=noplayers;++i){
-                final[i]['sub5'] = 0;
-                for(let j=1;j<=norounds;++j){
-                    oppo = getOppo(i, j);
-                    if(oppo>0){
-                        final[i]['sub5'] += final[oppo]['sub2'];
+            },'解鎖']
+        ])
+    );
+
+    for(let col = 1; col <= norounds; ++col) {
+        $('thead tr').appendChild(createElementFromJsonML(
+            ['th', {class: 'text-center'},
+                ['button', {
+                    type: 'button',
+                    class: 'btn btn-sm btn-primary',
+                    name: 'btn_match',
+                    hidden: 'hidden',
+                    data: {col}, // `{col}` means `{"col": col}`
+                    onclick: event => {
+                        match(col);
+                        lock(col);
                     }
-                }
-            }
-            // 輔六：（所勝對手之輔分一）＋（所和對手之輔分一的一半）
-            for(let i=1;i<=noplayers;++i){
-                final[i]['sub6'] = 0;
-                for(let j=1;j<=norounds;++j){
-                    p = getPoints(i, j);
-                    oppo = getOppo(i, j);
-                    if(p>0 && oppo>0){
-                        final[i]['sub6'] += (final[j]['sub1'] * p / win_points);
+                }, '開始配對'],
+                ['button',{
+                    type: 'button',
+                    class: 'btn btn-sm btn-secondary',
+                    name: 'btn_unlock',
+                    data: {col},
+                    hidden: 'hidden',
+                    onclick: event => {
+                        unlock(col);
                     }
-                }
-            }
-            // 輔七：（所勝對手之輔分二）＋（所和對手之輔分二的一半）
-            for(let i=1;i<=noplayers;++i){
-                final[i]['sub7'] = 0;
-                for(let j=1;j<=norounds;++j){
-                    p = getPoints(i, j);
-                    oppo = getOppo(i, j);
-                    if(p>0 && oppo>0){
-                        final[i]['sub7'] += (final[j]['sub2'] * p / win_points);
+                },'解鎖']
+            ]
+        ));
+    }
+
+    $('thead tr').appendChild(createElementFromJsonML(
+        ['th', {class: 'd-flex justify-content-around'},
+            ['div', {},
+                ['button', {
+                    type: 'button',
+                    class: 'btn btn-sm btn-primary',
+                    onclick: event => {
+                        calTotalpoints(norounds);
+                        calSubpoints(norounds);
+                        sort();
+                        outputResult();
                     }
-                }
-            }
-            sortResult();
+                }, '結算']
+            ],
+            ['div', {},
+                ['button',{
+                    type: 'button',
+                    class: 'btn btn-sm btn-light fw-bold',
+                    disabled: true
+                }, '輔一']
+            ],
+            ['div', {},
+                ['button',{
+                    type: 'button',
+                    class: 'btn btn-sm btn-light fw-bold',
+                    disabled: true
+                }, '名次']
+            ]
+        ]
+    ));
 
-            console.log(final);
-
-            //顯示final result
-            $('#final_result thead').replaceChildren(
-                createElementFromJsonML(
-                    ['tr', {},
-                        ['th',{class: 'rounded'},'編號'],
-                        ['th',{class: 'rounded'},'姓名'],
-                        ['th',{class: 'rounded'},'總分'],
-                        ['th',{class: 'rounded'},'輔一'],
-                        ['th',{class: 'rounded'},'輔二'],
-                        ['th',{class: 'rounded'},'輔四'],
-                        ['th',{class: 'rounded'},'輔五'],
-                        ['th',{class: 'rounded'},'輔六'],
-                        ['th',{class: 'rounded'},'輔七'],
-                        ['th',{class: 'rounded'},'名次']
-                    ]
-                )
-            );
-
-            $('#final_result tbody').replaceChildren();
-            for(let i=1;i<=noplayers;++i){
-                pname = $(`input[name=pname][data-row="${i}"]`).value;
-                $('#final_result tbody').append(
-                    createElementFromJsonML(
-                        ['tr', {},
-                            ['td',{class: 'rounded'},i],
-                            ['td',{class: 'rounded'},pname],
-                            ['td',{class: 'rounded'},final[i]['total']],
-                            ['td',{class: 'rounded'},final[i]['sub1']],
-                            ['td',{class: 'rounded'},final[i]['sub2']],
-                            ['td',{class: 'rounded'},final[i]['sub4']],
-                            ['td',{class: 'rounded'},final[i]['sub5']],
-                            ['td',{class: 'rounded'},final[i]['sub6']],
-                            ['td',{class: 'rounded'},final[i]['sub7']],
-                            ['td',{class: 'rounded'},final[i]['place']]
-                        ]
-                    )
-                );
-            }
-        }
-
-        function hideRow0(){
-            /** 不知道為何失效的程式碼
-            $$('[data-row="0"]').forEach( element => {
-                element.hidden = "hidden";
-            });
-            */
-
-           $('#main tbody tr').style.display = "none";
-
-        }
-        //新增選手
-        listen('#add_player', 'click', () => {
-            norounds = parseInt($('#norounds').value);
-            noplayers = parseInt($('#noplayers').value);
-            ++noplayers;
-            $('#noplayers').value = noplayers;
-            $(`input[data-row="0"][name="place"]`).value = noplayers+1;
-
-            const tr =
-                ['tr',{},
-                    ['td', {class: 'text-end'}, noplayers],
-                    ['td', {},
-                        ['input', {
-                            type: 'checkbox',
-                            class: 'form-check-input',
-                            checked: 'checked',
-                            name: 'ingame',
-                            title: '勾選表示未退賽',
-                            'data-row': noplayers
-                        }]
-                    ],
-                    ['td', {},
-                        ['input', {
-                            type: 'text',
-                            name: 'pname',
-                            class: 'form-control',
-                            'data-row': noplayers
-                        }]
-                    ]
-                ];
-
-            for(let i=1;i<=norounds;++i){
-                tr.push(
-                    ['td',{class: 'round'},
-                        ['div',{class: 'd-flex justify-content-around rounded'},
-                            ['input', {
-                                type: 'number',
-                                class: 'form-control d-inline text-center m-1',
-                                style: 'width: 45%',
-                                title: `${noplayers}號選手第${i}輪之對手`,
-                                name: 'oppo',
-                                'data-row': noplayers,
-                                'data-col': i
-                            }], // input
-                            ['input', {
-                                type: 'number',
-                                class: 'form-control d-inline text-center m-1',
-                                style: 'width: 45%',
-                                name: 'points',
-                                autocomplete: 'off',
-                                title: '獲勝左鍵，平手右鍵',
-                                'data-row': noplayers,
-                                'data-col': i,
-                                onclick: event => {
-                                    if($('#fastFill').checked)
-                                        clickWin(event.target.dataset.row, event.target.dataset.col);
-                                    showNextBtn(event.target.dataset.col);
-                                },
-                                oncontextmenu: event => {
-                                    event.preventDefault();
-                                    if($('#fastFill').checked)
-                                        clickEven(event.target.dataset.row, event.target.dataset.col);
-                                    showNextBtn(event.target.dataset.col);
-                                },
-                                oninput: event => {
-                                    showNextBtn(event.target.dataset.col);
-                                }
-                            }] // input
-                        ] // div
-                    ]
-                );
-            }
-
-            tr.push(
+    $('tbody').replaceChildren();
+    for(let row = 0; row <= noplayers; ++row) {
+        const tr =
+            ['tr', {},
+                ['td', {
+                    class: 'text-end'
+                }, row],
                 ['td', {},
                     ['input', {
-                        type: 'number',
-                        class: 'form-control d-inline text-center',
-                        name: 'totalpoints',
-                        'data-row': noplayers,
-                        style: 'width: 33%'
+                        type: 'checkbox',
+                        class: 'form-check-input',
+                        checked: 'checked',
+                        name: 'ingame',
+                        title: '勾選表示未退賽',
+                        data: {row}
                     }],
+                ],
+                ['td', {},
                     ['input', {
-                        type: 'number',
-                        class: 'form-control d-inline text-center',
-                        name: 'subpoints',
-                        'data-row': noplayers,
-                        style: 'width: 33%'
-                    }],
-                    ['input', {
-                        type: 'number',
-                        class: 'form-control d-inline text-center',
-                        name: 'place',
-                        'data-row': noplayers,
-                        style: 'width: 33%'
+                        type: 'text',
+                        name: 'pname',
+                        class: 'form-control',
+                        data: {row},
                     }]
                 ]
-            );
-
-            $('tbody').appendChild(createElementFromJsonML(tr));
-        });
-
-        listen('#draw_table', 'click', () => {
-            if(!confirm('確認要清空並重製一個新的對戰紀錄表嗎？')){
-                return;
-            }
-
-            const noplayers = parseInt($('#noplayers').value);
-            const norounds = parseInt($('#norounds').value);
-
-            $('thead tr').replaceChildren(
-                createElementFromJsonML(['th']),
-                createElementFromJsonML(['th']),
-                createElementFromJsonML(['th', {class: 'text-center'},
-                    ['button', {
-                        type: 'button',
-                        class: 'btn btn-sm btn-primary',
-                        id: 'btn_draw',
-                        onclick: event => {
-                            console.log('開始抽籤');
-                            console.log(parseInt($('#noplayers').value));
-                            draw();
-                        }
-                    }, '抽籤'],
-                    ['button',{
-                        type: 'button',
-                        class: 'btn btn-sm btn-secondary',
-                        name: 'btn_unlock',
-                        'data-col': '0',
-                        hidden: 'hidden',
-                        onclick: event => {
-                            unlock(0);
-                        }
-                    },'解鎖']
-                ])
-            );
-
-            for(let col = 1; col <= norounds; ++col) {
-                $('thead tr').appendChild(createElementFromJsonML(
-                    ['th', {class: 'text-center'},
-                        ['button', {
-                            type: 'button',
-                            class: 'btn btn-sm btn-primary',
-                            name: 'btn_match',
-                            hidden: 'hidden',
-                            data: {col}, // `{col}` means `{"col": col}`
-                            onclick: event => {
-                                match(col);
-                                lock(col);
-                            }
-                        }, '開始配對'],
-                        ['button',{
-                            type: 'button',
-                            class: 'btn btn-sm btn-secondary',
-                            name: 'btn_unlock',
-                            data: {col},
-                            hidden: 'hidden',
-                            onclick: event => {
-                                unlock(col);
-                            }
-                        },'解鎖']
-                    ]
-                ));
-            }
-
-            $('thead tr').appendChild(createElementFromJsonML(
-                ['th', {class: 'd-flex justify-content-around'},
-                    ['div', {},
-                        ['button', {
-                            type: 'button',
-                            class: 'btn btn-sm btn-primary',
-                            onclick: event => {
-                                calTotalpoints(norounds);
-                                calSubpoints(norounds);
-                                sort();
-                                outputResult();
-                            }
-                        }, '結算']
-                    ],
-                    ['div', {},
-                        ['button',{
-                            type: 'button',
-                            class: 'btn btn-sm btn-light fw-bold',
-                            disabled: true
-                        }, '輔一']
-                    ],
-                    ['div', {},
-                        ['button',{
-                            type: 'button',
-                            class: 'btn btn-sm btn-light fw-bold',
-                            disabled: true
-                        }, '名次']
-                    ]
-                ]
-            ));
-
-            $('tbody').replaceChildren();
-            for(let row = 0; row <= noplayers; ++row) {
-                const tr =
-                    ['tr', {},
-                        ['td', {
-                            class: 'text-end'
-                        }, row],
-                        ['td', {},
-                            ['input', {
-                                type: 'checkbox',
-                                class: 'form-check-input',
-                                checked: 'checked',
-                                name: 'ingame',
-                                title: '勾選表示未退賽',
-                                data: {row}
-                            }],
-                        ],
-                        ['td', {},
-                            ['input', {
-                                type: 'text',
-                                name: 'pname',
-                                class: 'form-control',
-                                data: {row},
-                            }]
-                        ]
-                    ]
-                ;
-                for(let col = 1; col <= norounds; ++col) {
-                    tr.push(
-                        ['td', {},
-                            ['div',{class: 'd-flex justify-content-around rounded'},
-                                ['input', {
-                                    type: 'number',
-                                    class: 'form-control d-inline text-center m-1',
-                                    style: 'width: 45%',
-                                    title: `${row}號選手第${col}輪之對手`,
-                                    name: 'oppo',
-                                    data: {row, col},
-                                }], // input
-                                ['input', {
-                                    type: 'number',
-                                    class: 'form-control d-inline text-center m-1',
-                                    style: 'width: 45%',
-                                    name: 'points',
-                                    autocomplete: 'off',
-                                    title: '快速填分：獲勝左鍵，平手右鍵',
-                                    data: {row, col},
-                                    onclick: event => {
-                                        if($('#fastFill').checked){
-                                            clickWin(event.target.dataset.row, event.target.dataset.col);
-                                            showNextBtn(event.target.dataset.col);
-                                        }
-                                    },
-                                    oncontextmenu: event => {
-                                        event.preventDefault();
-                                        if($('#fastFill').checked){
-                                            clickEven(event.target.dataset.row, event.target.dataset.col);
-                                            showNextBtn(event.target.dataset.col);
-                                        }
-                                    },
-                                    oninput: event => {
-                                        showNextBtn(event.target.dataset.col);
-                                    }
-                                }]
-                            ] // div
-                        ] // td
-                    );
-                }
-                tr.push(
-                    ['td', {},
+            ]
+        ;
+        for(let col = 1; col <= norounds; ++col) {
+            tr.push(
+                ['td', {},
+                    ['div',{class: 'd-flex justify-content-around rounded'},
                         ['input', {
                             type: 'number',
-                            class: 'form-control d-inline text-center',
-                            name: 'totalpoints',
-                            data: {row},
-                            style: 'width: 33%'
-                        }],
+                            class: 'form-control d-inline text-center m-1',
+                            style: 'width: 45%',
+                            title: `${row}號選手第${col}輪之對手`,
+                            name: 'oppo',
+                            data: {row, col},
+                        }], // input
                         ['input', {
                             type: 'number',
-                            class: 'form-control d-inline text-center',
-                            name: 'subpoints',
-                            data: {row},
-                            style: 'width: 33%'
-                        }],
-                        ['input', {
-                            type: 'number',
-                            class: 'form-control d-inline text-center',
-                            name: 'place',
-                            data: {row},
-                            style: 'width: 33%'
+                            class: 'form-control d-inline text-center m-1',
+                            style: 'width: 45%',
+                            name: 'points',
+                            autocomplete: 'off',
+                            title: '快速填分：獲勝左鍵，平手右鍵',
+                            data: {row, col},
+                            onclick: event => {
+                                if($('#fastFill').checked){
+                                    clickWin(event.target.dataset.row, event.target.dataset.col);
+                                    showNextBtn(event.target.dataset.col);
+                                }
+                            },
+                            oncontextmenu: event => {
+                                event.preventDefault();
+                                if($('#fastFill').checked){
+                                    clickEven(event.target.dataset.row, event.target.dataset.col);
+                                    showNextBtn(event.target.dataset.col);
+                                }
+                            },
+                            oninput: event => {
+                                showNextBtn(event.target.dataset.col);
+                            }
                         }]
-                    ]
-                );
-                $('tbody').appendChild(createElementFromJsonML(tr));
-            }
-            $('button[data-col="1"]').hidden = "";
-            for(let col=1;col<=norounds;++col){
-                setOppo(0, col, 0);
-                setPoints(0, col, 0);
-            }
-            $(`input[data-row="0"][name="totalpoints"]`).value = 0;
-            $(`input[data-row="0"][name="subpoints"]`).value = 0;
-            $(`input[data-row="0"][name="place"]`).value = noplayers+1;
+                    ] // div
+                ] // td
+            );
+        }
+        tr.push(
+            ['td', {},
+                ['input', {
+                    type: 'number',
+                    class: 'form-control d-inline text-center',
+                    name: 'totalpoints',
+                    data: {row},
+                    style: 'width: 33%'
+                }],
+                ['input', {
+                    type: 'number',
+                    class: 'form-control d-inline text-center',
+                    name: 'subpoints',
+                    data: {row},
+                    style: 'width: 33%'
+                }],
+                ['input', {
+                    type: 'number',
+                    class: 'form-control d-inline text-center',
+                    name: 'place',
+                    data: {row},
+                    style: 'width: 33%'
+                }]
+            ]
+        );
+        $('tbody').appendChild(createElementFromJsonML(tr));
+    }
+    $('button[data-col="1"]').hidden = "";
+    for(let col=1;col<=norounds;++col){
+        setOppo(0, col, 0);
+        setPoints(0, col, 0);
+    }
+    $(`input[data-row="0"][name="totalpoints"]`).value = 0;
+    $(`input[data-row="0"][name="subpoints"]`).value = 0;
+    $(`input[data-row="0"][name="place"]`).value = noplayers+1;
 
-            hideRow0();
+    hideRow0();
 
-            $('#final_result thead').replaceChildren();
-            $('#final_result tbody').replaceChildren();
+    $('#final_result thead').replaceChildren();
+    $('#final_result tbody').replaceChildren();
+
+    return true;
+}
+
+function downloadJSON() {
+    const result = {
+        title: $('#title').value,
+        noplayers: parseInt($('#noplayers').value),
+        norounds: parseInt($('#norounds').value),
+        win_points: parseInt($('#win_points').value),
+        fastFill: !!$('#fastFill').value,
+        players: [],
+        final
+    };
+
+    for (let row = 1; row <= result.noplayers; ++row) {
+        result.players[row] = {
+            ingame: !!$(`[name=ingame][data-row="${row}"]`).value,
+            pname: $(`[name=pname][data-row="${row}"]`).value,
+            oppo: [],
+            points: []
+        };
+        ['oppo', 'points'].forEach(key => {
+            for (let col = 1; col <= result.norounds; ++col) {
+                const selector = `[name=${key}][data-row="${row}"][data-col="${col}"]`;
+                result.players[row][key][col] = parseInt($(selector).value || 0);
+            }
         });
+    }
 
-        $('#draw_table').click();
+    kongUtil.downloadData(JSON.stringify(result), 'swiss.json', 'application/json');
+}
+
+function downloadCSV() {
+    alert('還沒寫');
+}
+
+async function loadJSON(file) {
+    try {
+        const json = await kongUtil.readFile(file, 'text');
+        data = JSON.parse(json);
+    }
+    catch (err) {
+        console.error('不是 JSON 檔案');
+        throw err;
+    }
+
+    try {
+        ['title', 'noplayers', 'norounds', 'win_points'].forEach(key => {
+            $(`#${key}`).value = data[key].toString();
+        });
+        $('#fastFill').checked = data.fastFill;
+
+        if (!drawTable()) return console.debug('放棄載入');
+
+        for (let row = 1; row <= data.noplayers; ++row) {
+            const player = data.players[row];
+            $(`[name=ingame][data-row="${row}"]`).checked = player.ingame;
+            $(`[name=pname][data-row="${row}"]`).value = player.pname;
+            ['oppo', 'points'].forEach(key => {
+                for (let col = 1; col <= data.norounds; ++col) {
+                    const selector = `[name=${key}][data-row="${row}"][data-col="${col}"]`;
+                    $(selector).value = player[key][col].toString();
+                }
+            });
+        }
+    }
+    catch (err) {
+        console.error('載入失敗');
+        throw err;
+    }
+
+    // 結算
+    calTotalpoints(norounds);
+    calSubpoints(norounds);
+    sort();
+    outputResult();
+}
+
+
+/********
+ * 主程式
+ */
+
+listen('#draw_table', 'click', drawTable);
+listen('#add_player', 'click', addPlayer);
+listen('#downloadJSON', 'click', downloadJSON);
+listen('#downloadCSV', 'click', downloadCSV);
+
+listen('#loadJSON', 'change', event => {
+    if (!event.target.files.length) return console.debug('沒有選擇檔案');
+    loadJSON(event.target.files[0])
+    .finally(() => event.target.files = null);
+});
+
+drawTable();
 
     </script>
 </body>
