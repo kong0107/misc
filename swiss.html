@@ -951,7 +951,43 @@ function downloadJSON() {
 }
 
 function downloadCSV() {
-    alert('還沒寫');
+    const title = $('#title').value.replace(/"/g, '""');
+    noplayers = parseInt($('#noplayers').value);
+    norounds = parseInt($('#norounds').value);
+    win_points = parseInt($('#win_points').value);
+    const emptyTail = ''.padStart(norounds * 2 + 8, ',') + '\r\n';
+
+    let csv = '\ufeff' // BOM
+        + `比賽名稱,"${title}",${emptyTail}`
+        + `人數,${noplayers},${emptyTail}`
+        + `輪數,${norounds},${emptyTail}`
+        + `勝分,${win_points},${emptyTail}`
+        + '編號,參賽,姓名,'
+    ;
+    for (let col = 1; col <= norounds; ++col) csv += '對手,得分,';
+    csv += '總分,輔一,輔二,輔四,輔五,輔六,輔七,名次\r\n';
+
+    for (let row = 1; row <= noplayers; ++row) {
+        csv += row + ','
+            + ($(`[name=ingame][data-row="${row}"]`).value ? '是' : '否') + ','
+            + '"' + ($(`[name=pname][data-row="${row}"]`).value).replace(/"/g, '""') + '",'
+        ;
+        for (let col = 1; col <= norounds; ++col) {
+            csv += parseInt($(`[name=oppo][data-row="${row}"][data-col="${col}"]`).value || 0) + ','
+                + parseInt($(`[name=points][data-row="${row}"][data-col="${col}"]`).value || 0) + ','
+            ;
+        }
+
+        csv += final[row].total + ',';
+        for (let sub = 1; sub <= 7; ++sub) {
+            if (sub === 3) continue;
+            csv += final[row][`sub${sub}`] + ',';
+        }
+
+        csv += final[row].place + '\r\n';
+    }
+
+    kongUtil.downloadData(csv, 'swiss.csv', 'text/csv');
 }
 
 async function loadJSON(file) {
