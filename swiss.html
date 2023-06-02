@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/kong-util@0.7.3/dist/all.js"></script>
+</head>
+<script>
+
+var noplayers;
+var noplayers_ingame;
+var norounds;
+var place;
+var taken;
+var win_points = 2;
+
+function match(round){
+    noplayers = parseInt($('#noplayers').value);
+    norounds = parseInt($('#norounds').value);
+    
+    //第一輪，直接配置對手
+    if(round==1){
+        for(let i=1;i<=noplayers;++i)
+            $(`input[data-row="${i}"][data-col="1"][name="oppo"]`).value = i - (i*2-1)%4+2;
+        if(noplayers%2==1)
+            $(`input[data-row="${noplayers}"][data-col="1"][name="oppo"]`).value = 0;
+        return;
+    }
+    //非首輪
+    calTotalpoints(round-1);
+    calSubpoints(round-1);
+    sort();
+    
+    taken = [];
+    quitgame = 0;
+    for(let i=1;i<=noplayers;++i){
+        if(isIngame(i))
+            taken[i] = false;
+        else{
+            taken[i] = true;
+            setOppo(i, round, -1);
+            ++quitgame;
+            console.log(`${i}已退賽`);
+        }
+    }
+    noplayers_ingame = noplayers - quitgame;
+
+    var notables = (noplayers_ingame+noplayers_ingame%2)/2;
+    var table = [];
+    for(let i=1;i<=notables;++i){
+        table[i] = [0, 0];
+    }
+    
+    for(let i=1;i<=notables;++i){
+        if(i==0){
+            alert('無法配對');
+            return;
+        }
+
+        console.log(`第${i}桌排序中`);
+        //尋找place中，排名最小，未taken之選手，置於table[i][0]
+        pickp0(table, i);
+        //尋找place中，排名最小，未taken，未與table[i][0]對戰過之選手，置於table[i][1]
+        //若未找到，重設本桌，重配前桌
+        if(!pickp1(table, i, round)){
+            taken[table[i][0]] = false;
+            table[i][0] = 0;
+            i -= 2;
+        }
+    }
+    
+    console.log(table);
+    console.log(place);
+    //將對手編號填入表格
+    for(let i=1;i<=notables;++i){
+        setOppo(table[i][0], round, table[i][1]);
+        setOppo(table[i][1], round, table[i][0]);
+    }
+    for(let i=1;i<=noplayers;++i){
+        if(!isIngame(i))
+            setOppo(i, round, -1);
+    }
+}
+function pickp0(table, notable){
+    //尋找place中，排名最小，未taken之選手，置於table[i][0]
+    if(table[notable][0]!=0){
+        console.log('本桌已有p0', notable, table[notable][0]);
+        return;
+    }
+    console.log(`table[${notable}]之p0選取中`);
+    for(let i=1;i<=noplayers;++i){
+        if(taken[place[i]]==false){
+            table[notable][0] = place[i];
+            taken[place[i]] = true;
+            console.log('p0 in table '+notable+' is '+place[i]);
+            return;
+        }
+    }
+}
+function pickp1(table, notable, round){
+    //尋找place中，排名最小，未taken，未與table[i][0]對戰過之選手，置於table[i][1]
+    var p;
+    var p1;
+    var start_place;
+    var oppo;
+
+    //clean table
+    for(let i=1;i<=noplayers;++i)
+        setOppo(i, round, '');
+    
+    if(table[notable][1]==0){
+        p = table[notable][0];
+    }
+    else{
+        p = table[notable][1];
+        taken[p] = false;
+        table[notable][1] = 0;
+    }
+    start_place = $(`[name="place"][data-row="${p}"]`).value;
+    start_place = parseInt(start_place);
+
+    for(let i=start_place+1;i<=noplayers;++i){
+        if(taken[place[i]]==false){
+            p1 = place[i];
+            for(let j=1;j<=norounds;++j){
+                oppo = getOppo(table[notable][0], j);
+                if(isNaN(oppo)){
+                    // 找到了
+                    table[notable][1] = p1;
+                    taken[p1] = true;
+                    console.log(`本桌p1為${p1}`);
+                    return true;
+                }
+                if(oppo == p1){
+                    break;
+                }
+            }
+        }
+    }
+    //輪空確認
+    if(noplayers_ingame%2==1){
+        const notables = (noplayers_ingame+noplayers_ingame%2)/2;
+        if(neverPass(table[notables][0])){
+            taken[table[notables][0]] = true;
+            return true;
+        }
+    }
+    //沒找到p1
+    return false;
+}
+
+function neverPass(player){
+    if(isNaN(player) || player>noplayers)
+        return console.log('Error neverPass');
+    var oppo;
+    for(let i=1;i<=norounds;++i){
+        oppo = getOppo(player, i);
+        if(!isNaN(oppo) && oppo==0)
+            return false;
+    }
+    return true;
+}
+function calTotalpoints(){
+    for(let i=1;i<=noplayers;++i){
+        total = 0;
+        for(let j=1;j<=norounds;++j){
+            points = getPoints(i, j);
+            if(!isNaN(points))
+                total += points;
+        }
+        $(`input[data-row="${i}"][name="totalpoints"]`).value = total;
+    }
+}
+function calSubpoints(round){
+    var sub;
+    var nooppo;
+    for(let i=1;i<=noplayers;++i){
+        sub = 0;
+        for(let j=1;j<=round;++j){
+            //取得第j輪對手的編號
+            nooppo = getOppo(i, j);
+            //取得第j輪對手的總分, 加入sub
+            if(!isNaN(nooppo) && nooppo>0 && nooppo<=noplayers)
+                sub += getTotalpoints(nooppo);
+        }
+        $(`input[data-row="${i}"][name="subpoints"]`).value = sub;
+    }
+}
+function sort(){ //Selection Sort
+    place = [];
+    for(let i=1;i<=noplayers;++i)
+        place[i] = i;
+    for(let i=1;i<=noplayers;++i){
+        for(let j=i+1;j<=noplayers;++j){
+            if(compare(place[j], place[i])){
+                temp = place[j];
+                place[j] = place[i];
+                place[i] = temp;
+            }
+        }
+        $(`[name="place"][data-row="${place[i]}"]`).value = i;
+    }
+    return;
+}
+function compare(x, y){ //for sort()
+    if(getTotalpoints(x)>getTotalpoints(y)) return 1;
+    if(getTotalpoints(x)<getTotalpoints(y)) return 0;
+    if(getSubpoints(x)>getSubpoints(y)) return 1;
+    if(getSubpoints(x)<getSubpoints(y)) return 0;
+    if(x<=y) return 1;
+    return 0;
+}
+
+function randomPoints(round){ 
+    var oppo;
+    var points;
+    for(let i=1;i<=noplayers;++i){
+        oppo = parseInt(getOppo(i, round));
+        points = Math.floor(Math.random()*3);
+        if(oppo>0){
+            setPoints(i, round, points);
+            setPoints(oppo, round, 2-points);
+        }
+        else{
+            setPoints(i, round, 2);
+        }
+    }
+}
+
+//確認某選手是否在比賽中
+function isIngame(player){
+    if(isNaN(player))
+        return console.log('Error isIngame');
+    const target = $(`input[name="ingame"][data-row="${player}"]`);
+    if(target)
+        return target.checked;
+}
+function getPoints(player, round) {
+    if(isNaN(player))
+        return console.log('Error getPoints');
+    const target = $(`input[name="points"][data-row="${player}"][data-col="${round}"]`);
+    if(target)
+        return parseInt(target.value);
+}
+function getOppo(player, round) {
+    if(isNaN(player))
+        return console.log('Error getOppo');
+    const target = $(`input[name="oppo"][data-row="${player}"][data-col="${round}"]`);
+    if(target)
+        return parseInt(target.value);
+}
+function getTotalpoints(player){
+    if(isNaN(player))
+        return console.log('Error getTotalpoints');
+    const target = $(`input[name="totalpoints"][data-row="${player}"]`);
+    if(target)
+        return parseInt(target.value);
+}
+function getSubpoints(player){
+    if(isNaN(player))
+        return console.log('Error getSubpoints');
+    const target = $(`input[name="subpoints"][data-row="${player}"]`);
+    if(target)
+        return parseInt(target.value);
+}
+function setPoints(player, round, points) {
+    if(isNaN(player)) return console.error('aaaa');
+    // setInputValue(`input[name="points"][data-row="${player}"][data-col="${round}"]`, points)
+    // setInputValue({
+    //     name: 'points',
+    //     "data-row": player,
+    //     "data-col": round
+    // }, points);
+
+    // if(!isNaN(player))
+    const target = $(`input[name="points"][data-row="${player}"][data-col="${round}"]`);
+    if(target) target.value = points;
+}
+function setOppo(player, round, oppo) {
+    if(isNaN(player))
+        return console.log('Error Oppo');
+    const target = $(`input[name="oppo"][data-row="${player}"][data-col="${round}"]`);
+    if(target)
+        target.value = oppo;
+}
+function draw(){
+    noplayers = parseInt($('#noplayers').value);
+    for(let i=1;i<=noplayers;++i){
+        target = Math.floor(Math.random()*noplayers)+1;
+        console.log(`going to swap ${i} and ${target}`);
+        temp = $(`input[name="pname"][data-row="${i}"]`).value;
+        $(`input[name="pname"][data-row="${i}"]`).value = $(`input[name="pname"][data-row="${target}"]`).value;
+        $(`input[name="pname"][data-row="${target}"]`).value = temp;
+    }
+}
+function clickWin(row, col){
+    const oppo = getOppo(row, col);
+    if(oppo==0) setPoints(row, col, 2);
+    if(oppo==-1) setPoints(row, col, 0);
+    if(oppo>0 && oppo<=noplayers){
+        const points = win_points;
+        setPoints(row, col, points);
+        setPoints(oppo, col, win_points-points);
+    }
+}
+function clickEven(row, col){
+    const oppo = getOppo(row, col);
+    if(oppo==0) setPoints(row, col, 2);
+    if(oppo==-1) setPoints(row, col, 0);
+    if(oppo>0 && oppo<=noplayers){
+        setPoints(row, col, 1);
+        setPoints(oppo, col, 1);
+    }
+}
+// function setInputValue(selector, value) {
+//     const target = $(selector);
+//     if(!target) return console.error('no such element');
+//     target.value = value;
+// }
+
+// function setInputValue(obj, value) {
+//     let selector = 'input';
+//     for(let attr in obj) selector += `[${attr}="${obj[attr]}"]`;
+//     const target = $(selector);
+//     if(!target) return console.error('no such element');
+//     target.value = value;
+// }
+
+</script>
+<body>
+    <div class="container m-3 border border-2 border-info rounded-3 p-3">
+        <details class="text-start">
+            <summary class="mb-2">
+                比賽設定
+            </summary>
+            <form>
+                <dl class="d-flex">
+                    <dt>人數：</dt>
+                    <dd><input id="noplayers" type="number" class="form-control" value="8" min="2"></dd>
+                </dl>
+                <dl class="d-flex">
+                    <dt>輪數：</dt>
+                    <dd><input id="norounds" type="number" class="form-control" value="5" min="1"></dd>
+                </dl>
+                <button type="button" class="btn btn-sm btn-primary">產生對戰表</button>
+                <button type="button" class="btn btn-sm btn-primary" id="add_player">新增1位參賽者</button>
+            </form>
+        </details>
+    </div>
+    <table>
+        <thead><tr></tr></thead>
+        <tbody></tbody>
+    </table>
+    <script>
+        kongUtil.use();
+        /**
+         * kongUtil
+         * see https://kong0107.github.io/kong-util/demo.html
+         *
+         * examples:
+         * - `$(selector)` is same as
+         *   `document.querySelector(selector)`
+         *
+         * - `listen(selector, eventType, listener)` is same as
+         *   `document.querySelector(selector).addEventListener(eventType, listener)`
+         *
+         * - `createElementFromJsonML(['a', {href: '#'}, 'oh'])` is same as a function within which:
+         *      const a = document.createElement('a');
+         *      a.setAttribute('href', '#');
+         *      a.appendChild(document.createTextNode('oh'));
+         *      return a;
+         */
+
+        listen('#add_player', 'click', () => {
+            noplayers = parseInt($('#noplayers').value);
+            ++noplayers;
+            $('#noplayers').value = noplayers;
+            
+            norounds = parseInt($('#norounds').value);
+
+            const tr =
+                ['tr',{},
+                    ['td', {class: 'text-end'}, noplayers],
+                    ['td', {},
+                        ['input', {
+                            type: 'checkbox',
+                            class: 'form-check-input',
+                            checked: 'checked',
+                            name: 'ingame',
+                            title: '勾選表示未退賽',
+                            data: {noplayers}
+                        }]
+                    ],
+                    ['td', {},
+                        ['input', {
+                            type: 'text',
+                            name: 'pname',
+                            class: 'form-control',
+                            data: {noplayers},
+                        }]
+                    ]
+                ];  
+            
+            for(let i=1;i<=norounds;++i){
+                tr.push(
+                    ['td',{},
+                        ['div',{class: 'd-flex justify-content-around'},
+                            ['input', {
+                                type: 'number',
+                                class: 'form-control d-inline text-center',
+                                style: 'width: 45%',
+                                title: `${noplayers}號選手第${i}輪之對手`,
+                                name: 'oppo',
+                                'data-row': noplayers,
+                                'data-col': i
+                            }], // input
+                            ['input', {
+                                type: 'number',
+                                class: 'form-control d-inline text-center',
+                                style: 'width: 45%',
+                                name: 'points',
+                                autocomplete: 'off',
+                                title: '獲勝左鍵，平手右鍵',
+                                'data-row': noplayers,
+                                'data-col': i,
+                                onclick: event => {
+                                    clickWin(event.target.dataset.row, event.target.dataset.col);
+                                    console.log(event.target.dataset);
+                                },
+                                oncontextmenu: event => {
+                                    event.preventDefault();
+                                    clickEven(event.target.dataset.row, event.target.dataset.col);
+                                    console.log(event.target.dataset);
+                                },
+                            }] // input
+                        ] // div
+                    ]
+                );                
+            }
+
+            tr.push(
+                ['td', {},
+                    ['input', {
+                        type: 'number',
+                        class: 'form-control d-inline',
+                        name: 'totalpoints',
+                        data: {noplayers},
+                        style: 'width: 33%'
+                    }],
+                    ['input', {
+                        type: 'number',
+                        class: 'form-control d-inline',
+                        name: 'subpoints',
+                        data: {noplayers},
+                        style: 'width: 33%'
+                    }],
+                    ['input', {
+                        type: 'number',
+                        class: 'form-control d-inline',
+                        name: 'place',
+                        data: {noplayers},
+                        style: 'width: 33%'
+                    }]
+                ]
+            );
+
+            $('tbody').appendChild(createElementFromJsonML(tr));
+
+        });
+
+        listen('form button', 'click', () => {
+            const noplayers = $('#noplayers').value;
+            const norounds = $('#norounds').value;
+
+            $('thead tr').replaceChildren(
+                createElementFromJsonML(['th']), 
+                createElementFromJsonML(['th']), 
+                createElementFromJsonML(['th', {class: 'text-center'},
+                    ['button', {
+                        type: 'button',
+                        class: 'btn btn-sm btn-primary',
+                        onclick: event => {
+                            console.log('開始抽籤');
+                            console.log(parseInt($('#noplayers').value));
+                            draw();
+                        }
+                    }, '抽籤']
+                ])
+            );
+            
+            for(let col = 1; col <= norounds; ++col) {
+                $('thead tr').appendChild(createElementFromJsonML(
+                    ['th', {class: 'text-center'},
+                        ['button', {
+                            type: 'button',
+                            class: 'btn btn-sm btn-primary',
+                            data: {col}, // `{col}` means `{"col": col}`
+                            onclick: event => {
+                                match(col);
+                                // alert('player #' + event.target.dataset.col);
+                            }
+                        }, '開始配對']
+                    ]
+                ));
+            }
+
+            $('thead tr').appendChild(createElementFromJsonML(
+                ['th', {class: 'd-flex justify-content-around'},
+                    ['div', {}, '總分'],
+                    ['div', {}, '輔分'],
+                    ['div', {}, '名次']
+                ]
+            ));
+
+            $('tbody').replaceChildren();
+            for(let row = 1; row <= noplayers; ++row) {
+                const tr =
+                    ['tr', {},
+                        ['td', {
+                            class: 'text-end'
+                        }, row],
+                        ['td', {}, 
+                            ['input', {
+                                type: 'checkbox',
+                                class: 'form-check-input',
+                                checked: 'checked',
+                                name: 'ingame',
+                                title: '勾選表示未退賽',
+                                data: {row}
+                            }],
+                        ],
+                        ['td', {},
+                            ['input', {
+                                type: 'text',
+                                name: 'pname',
+                                class: 'form-control',
+                                data: {row},
+                            }]
+                        ]
+                    ]
+                ;
+                for(let col = 1; col <= norounds; ++col) {
+                    tr.push(
+                        ['td', {},
+                            ['div',{class: 'd-flex justify-content-around'},
+                                ['input', {
+                                    type: 'number',
+                                    class: 'form-control d-inline text-center',
+                                    style: 'width: 45%',
+                                    title: `${row}號選手第${col}輪之對手`,
+                                    name: 'oppo',
+                                    data: {row, col},
+                                }], // input
+                                ['input', {
+                                    type: 'number',
+                                    class: 'form-control d-inline text-center',
+                                    style: 'width: 45%',
+                                    name: 'points',
+                                    autocomplete: 'off',
+                                    title: '獲勝左鍵，平手右鍵',
+                                    data: {row, col},
+                                    onclick: event => {
+                                        clickWin(event.target.dataset.row, event.target.dataset.col);
+                                    },
+                                    oncontextmenu: event => {
+                                        event.preventDefault();
+                                        clickEven(event.target.dataset.row, event.target.dataset.col);
+                                    },
+                                    oninput: event => {
+                                        // console.debug(`points of player #${row} in round #${col} is changed to ${event.target.value}`);
+                                    }
+                                }]
+                            ] // div
+                        ] // td
+                    );
+                }
+                tr.push(
+                    ['td', {},
+                        ['input', {
+                            type: 'number',
+                            class: 'form-control d-inline',
+                            name: 'totalpoints',
+                            data: {row},
+                            style: 'width: 33%'
+                        }],
+                        ['input', {
+                            type: 'number',
+                            class: 'form-control d-inline',
+                            name: 'subpoints',
+                            data: {row},
+                            style: 'width: 33%'
+                        }],
+                        ['input', {
+                            type: 'number',
+                            class: 'form-control d-inline',
+                            name: 'place',
+                            data: {row},
+                            style: 'width: 33%'
+                        }]
+                    ]
+                );
+                $('tbody').appendChild(createElementFromJsonML(tr));
+            }
+        });
+
+        $('form button').click();
+    </script>
+</body>
+</html>
