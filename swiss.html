@@ -23,25 +23,26 @@
     </style>
 </head>
 <body>
-    <div class="container m-3 border border-2 border-info rounded-3 p-3">
-        <details class="text-start" open>
+    <header class="container m-3 border border-2 border-info rounded-3 p-3">
+        <h1 class="fs-4 m-0 p-0">瑞士制計分表</h1>
+        <details>
             <summary class="mb-2">比賽設定</summary>
-            <form>
+            <div>
                 <dl class="d-flex mb-1">
                     <dt class="d-flex justify-content-center flex-column mb-2">比賽名稱：</dt>
                     <dd><input id="title" type="text" class="form-control" placeholder="比賽名稱"></dd>
                 </dl>
                 <dl class="d-flex mb-1">
                     <dt class="d-flex justify-content-center flex-column mb-2">人數：</dt>
-                    <dd><input id="noplayers" type="number" class="form-control" value="8" min="2"></dd>
+                    <dd><input id="noplayers" type="number" class="form-control" min="2"></dd>
                 </dl>
                 <dl class="d-flex mb-1">
                     <dt class="d-flex justify-content-center flex-column mb-2">輪數：</dt>
-                    <dd><input id="norounds" type="number" class="form-control" value="5" min="1"></dd>
+                    <dd><input id="norounds" type="number" class="form-control" min="1"></dd>
                 </dl>
                 <dl class="d-flex mb-1">
                     <dt class="d-flex justify-content-center flex-column mb-2">勝分：</dt>
-                    <dd><input id="win_points" type="number" class="form-control" value="2" min="1"></dd>
+                    <dd><input id="win_points" type="number" class="form-control" min="1"></dd>
                 </dl>
                 <div>
                     <button type="button" class="btn btn-sm btn-primary" id="draw_table">重製對戰表</button>
@@ -53,15 +54,13 @@
                 </div>
                 <div class="mt-2">
                     <label>
-                        <input type="file" id="loadJSON" class="d-none"
-                            accept="application/json"
-                        >
+                        <input type="file" id="loadJSON" class="d-none" accept="application/json">
                         <span class="btn btn-sm btn-info">從 JSON 讀取</span>
                     </label>
                 </div>
-            </form>
+            </div>
         </details>
-    </div>
+    </header>
     <table id="main">
         <thead><tr></tr></thead>
         <tbody></tbody>
@@ -79,10 +78,10 @@ kongUtil.use();
 /********
  * 全域變數宣告
  */
-var noplayers;
-var noplayers_ingame;
-var norounds;
-var win_points;
+var title = '';
+var noplayers = 8;
+var norounds = 5;
+var win_points = 2;
 var place = [];
 var taken = [];
 var final = [];
@@ -92,16 +91,50 @@ var final = [];
  * 函式宣告
  */
 
-function match(round){
-    noplayers = parseInt($('#noplayers').value);
-    norounds = parseInt($('#norounds').value);
+//確認某選手是否在比賽中
+function isIngame(player) { // boolean
+    return $(`input[name="ingame"][data-row="${player}"]`).checked;
+}
+function getPName(player) { // string
+    return $(`input[name="pname"][data-row="${player}"]`).value;
+}
+function getPoints(player, round) { // integer
+    return parseInt($(`input[name="points"][data-row="${player}"][data-col="${round}"]`).value);
+}
+function getOppo(player, round) { // integer
+    return parseInt($(`input[name="oppo"][data-row="${player}"][data-col="${round}"]`).value);
+}
+function getTotalpoints(player) { // integer
+    return parseInt($(`input[name="totalpoints"][data-row="${player}"]`).value);
+}
+function getSubpoints(player) { // integer
+    return parseInt($(`input[name="subpoints"][data-row="${player}"]`).value);
+}
+function getPlace(player) { // integer
+    return parseInt($(`input[name="place"][data-row="${player}"]`).value);
+}
 
-    if(round==1){
-        for(let i=1;i<=noplayers;++i)
-            $(`input[data-row="${i}"][data-col="1"][name="oppo"]`).value = i - (i*2-1)%4+2;
-        if(noplayers%2==1){
-            $(`input[data-row="${noplayers}"][data-col="1"][name="oppo"]`).value = 0;
-            $(`input[data-row="0"][data-col="1"][name="oppo"]`).value = noplayers;
+function setPName(player, pname) {
+    $(`input[name="pname"][data-row="${player}"]`).value = pname;
+}
+function setPoints(player, round, points) {
+    $(`input[name="points"][data-row="${player}"][data-col="${round}"]`).value = points.toString();
+}
+function setOppo(player, round, oppo) {
+    $(`input[name="oppo"][data-row="${player}"][data-col="${round}"]`).value = oppo.toString();
+}
+function setBGColor(row, col, color) {
+    $(`[data-row="${row}"][data-col="${col}"]`).parentNode.style.backgroundColor = color;
+}
+
+
+function match(round) {
+    if (round == 1) {
+        for (let i = 1; i <= noplayers; ++i)
+            setOppo(i, 1, i - (i * 2 - 1) % 4 + 2);
+        if (noplayers % 2) {
+            setOppo(noplayers, 1, 0);
+            setOppo(0, 1, noplayers);
         }
         return;
     }
@@ -113,8 +146,8 @@ function match(round){
 
     taken = [];
     // var quitgame = 0;
-    noplayers_ingame = 0
-    for(let i=1;i<=noplayers;++i){
+    let noplayers_ingame = 0;
+    for (let i = 1; i <= noplayers; ++i) {
         // if(isIngame(i))
         //     taken[i] = false;
         // else{
@@ -123,11 +156,11 @@ function match(round){
         //     ++quitgame;
         //     console.log(`${i}已退賽`);
         // }
-        if(isIngame(i)){
+        if (isIngame(i)) {
             taken[i] = false;
             ++noplayers_ingame;
         }
-        else{
+        else {
             taken[i] = true;
             setOppo(i, round, -1);
             // ++quitgame;
@@ -135,25 +168,22 @@ function match(round){
         }
     }
     // noplayers_ingame = noplayers - quitgame;
-    if(noplayers_ingame%2==0) //剩餘參賽人數為偶數
-        taken[0] = true;
-    else
-        taken[0] = false;
+    taken[0] = !(noplayers_ingame % 2);
 
-    var notables = (noplayers_ingame+noplayers_ingame%2)/2;
+    var notables = (noplayers_ingame + noplayers_ingame % 2) / 2;
     var table = [];
-    for(let i=1;i<=notables;++i)
+    for (let i = 1; i <= notables; ++i)
         table[i] = [0, 0];
 
-    for(let i=1;i<=notables;++i){
-        if(i==0){
+    for (let i = 1; i <= notables; ++i) {
+        if (i == 0) {
             alert('無法配對');
             return;
         }
 
         console.log(`第${i}桌排序中`);
         pickp0(table, i);
-        if(!pickp1(table, i, round)){
+        if (!pickp1(table, i, round)) {
             taken[table[i][0]] = false;
             table[i][0] = 0;
             i -= 2;
@@ -161,72 +191,67 @@ function match(round){
     }
 
     //將對手編號填入表格
-    for(let i=1;i<=notables;++i){
+    for (let i = 1; i <= notables; ++i) {
         setOppo(table[i][0], round, table[i][1]);
         setOppo(table[i][1], round, table[i][0]);
     }
-    for(let i=1;i<=noplayers;++i){
-        if(!isIngame(i))
+    for (let i = 1; i <= noplayers; ++i) {
+        if (!isIngame(i))
             setOppo(i, round, -1);
     }
 }
 
 
-function pickp0(table, notable){
+function pickp0(table, notable) {
     //尋找place中，排名最小，未taken之選手，置於table[i][0]
-    if(table[notable][0]!=0){
+    if (table[notable][0]) {
         console.log('本桌已有p0', notable, table[notable][0]);
         return;
     }
     console.log(`table[${notable}]之p0選取中`);
-    for(let i=1;i<=noplayers;++i){
-        if(taken[place[i]]==false){
+    for (let i = 1; i <= noplayers; ++i) {
+        if (!taken[place[i]]) {
             table[notable][0] = place[i];
             taken[place[i]] = true;
-            console.log('p0 in table '+notable+' is '+place[i]);
+            console.log(`p0 in table ${notable} is ${place[i]}`);
             return;
         }
     }
 }
 
 
-function pickp1(table, notable, round){
+function pickp1(table, notable, round) {
     //尋找place中，排名最小，未taken，未與table[i][0]對戰過之選手，置於table[i][1]
-    var p;
-    var p1;
-    var start_place;
-    var oppo;
+    let p;
 
     //clean table
-    for(let i=1;i<=noplayers;++i)
+    for (let i = 1; i <= noplayers; ++i)
         setOppo(i, round, '');
 
-    if(table[notable][1]==0){
+    if (!table[notable][1]) {
         p = table[notable][0];
     }
-    else{
+    else {
         p = table[notable][1];
         taken[p] = false;
         table[notable][1] = 0;
     }
-    start_place = $(`[name="place"][data-row="${p}"]`).value;
-    start_place = parseInt(start_place);
+    const start_place = getPlace(p);
 
-    for(let i=start_place+1;i<=noplayers+1;++i){
-        if(taken[place[i]]==false){
-            p1 = place[i];
-            for(let j=1;j<=norounds;++j){
-                oppo = getOppo(table[notable][0], j);
-                if(isNaN(oppo)){
-                    // 找到了
-                    table[notable][1] = p1;
-                    taken[p1] = true;
-                    console.log(`本桌p1為${p1}`);
-                    return true;
-                }
-                if(oppo == p1)
-                    break;
+    for (let i = start_place + 1; i <= noplayers + 1; ++i) {
+        if (taken[place[i]]) continue;
+        const p1 = place[i];
+
+        for (let j = 1; j <= norounds; ++j) {
+            const oppo = getOppo(table[notable][0], j);
+            if (isNaN(oppo)) {
+                // 找到了
+                table[notable][1] = p1;
+                taken[p1] = true;
+                console.log(`本桌p1為${p1}`);
+                return true;
             }
+            if (oppo == p1) break;
         }
     }
     //輪空確認
@@ -242,13 +267,12 @@ function pickp1(table, notable, round){
 }
 
 
-function calTotalpoints(round){
-    var total;
-    for(let i=1;i<=noplayers;++i){
-        total = 0;
-        for(let j=1;j<=round;++j){
+function calTotalpoints(round) {
+    for (let i = 1; i <= noplayers; ++i) {
+        let total = 0;
+        for (let j = 1; j <= round; ++j) {
             points = getPoints(i, j);
-            if(!isNaN(points))
+            if (!isNaN(points))
                 total += points;
         }
         $(`input[data-row="${i}"][name="totalpoints"]`).value = total;
@@ -256,32 +280,32 @@ function calTotalpoints(round){
 }
 
 
-function calSubpoints(round){
-    var sub;
-    var nooppo;
-    for(let i=1;i<=noplayers;++i){
-        sub = 0;
-        for(let j=1;j<=round;++j){
+function calSubpoints(round) {
+    for (let i = 1; i <= noplayers; ++i) {
+        let sub = 0;
+        for (let j = 1; j <= round; ++j) {
             //取得第j輪對手的編號
-            nooppo = getOppo(i, j);
+            const nooppo = getOppo(i, j);
             //取得第j輪對手的總分, 加入sub
-            if(!isNaN(nooppo) && nooppo>0 && nooppo<=noplayers)
-                sub += getTotalpoints(nooppo);
+            if (!isNaN(nooppo)
+                && nooppo > 0
+                && nooppo <= noplayers
+            ) sub += getTotalpoints(nooppo);
         }
         $(`input[data-row="${i}"][name="subpoints"]`).value = sub;
     }
 }
 
 
-function sort(){ //Selection Sort
+function sort() { //Selection Sort
     place = [];
-    place[noplayers+1] = 0;
+    place[noplayers + 1] = 0;
     // $(`[name="place"][data-row="0"]`).value = noplayers+1;
-    for(let i=1;i<=noplayers;++i)
+    for (let i = 1; i <= noplayers; ++i)
         place[i] = i;
-    for(let i=1;i<=noplayers;++i){
-        for(let j=i+1;j<=noplayers;++j){
-            if(compare(place[j], place[i])){
+    for (let i = 1; i <= noplayers; ++i) {
+        for (let j = i + 1; j <= noplayers; ++j) {
+            if (compare(place[j], place[i])) {
                 temp = place[j];
                 place[j] = place[i];
                 place[i] = temp;
@@ -289,33 +313,33 @@ function sort(){ //Selection Sort
         }
         $(`[name="place"][data-row="${place[i]}"]`).value = i;
     }
-    return;
+    // return;
 }
 
 
-function compare(x, y){ //for sort()
-    if(getTotalpoints(x)>getTotalpoints(y)) return 1;
-    if(getTotalpoints(x)<getTotalpoints(y)) return 0;
-    if(getSubpoints(x)>getSubpoints(y)) return 1;
-    if(getSubpoints(x)<getSubpoints(y)) return 0;
-    if(x<=y) return 1;
+function compare(x, y) { //for sort()
+    if (getTotalpoints(x) > getTotalpoints(y)) return 1;
+    if (getTotalpoints(x) < getTotalpoints(y)) return 0;
+    if (getSubpoints(x) > getSubpoints(y)) return 1;
+    if (getSubpoints(x) < getSubpoints(y)) return 0;
+    if (x <= y) return 1;
     return 0;
 }
 
 
-function lock(round){
-    if(round==1){
-        for(let i=1;i<=noplayers;++i){
+function lock(round) {
+    if (round == 1) {
+        for (let i = 1; i <= noplayers; ++i) {
             $(`input[name=pname][data-row="${i}"]`).disabled = true;
         }
         $('#btn_draw').hidden = "hidden";
         $(`button[name=btn_unlock][data-col="0"]`).hidden = "";
     }
-    for(let i=1;i<=noplayers;++i){
+    for (let i = 1; i <= noplayers; ++i) {
         $(`input[name=pname][data-row="${i}"]`).disabled = true;
         $('#btn_draw').hidden = "hidden";
         $(`button[name=btn_unlock][data-col="0"]`).hidden = "";
-        for(let j=1;j<round;++j){
+        for (let j = 1; j < round; ++j) {
             $(`input[name=points][data-row="${i}"][data-col="${j}"]`).disabled = true;
             $(`input[name=oppo][data-row="${i}"][data-col="${j}"]`).disabled = true;
             $(`button[name=btn_match][data-col="${j}"]`).hidden = "hidden";
@@ -325,147 +349,92 @@ function lock(round){
 }
 
 
-function unlock(round){
-    if(round==0){
-        for(let i=1;i<=noplayers;++i){
-            $(`input[name=pname][data-row="${i}"]`).disabled = false;
-        }
-        $('#btn_draw').hidden = "";
-        $(`button[name=btn_unlock][data-col="0"]`).hidden = "hidden";
-    }
-    else{
-        for(let i=1;i<=noplayers;++i){
+function unlock(round) {
+    if (round) {
+        for (let i = 1; i <= noplayers; ++i) {
             $(`input[name=points][data-row="${i}"][data-col="${round}"]`).disabled = false;
             $(`input[name=oppo][data-row="${i}"][data-col="${round}"]`).disabled = false;
             $(`button[name=btn_match][data-col="${round}"]`).hidden = "";
             $(`button[name=btn_unlock][data-col="${round}"]`).hidden = "hidden";
         }
     }
+    else {
+        for (let i = 1; i <= noplayers; ++i)
+            $(`input[name=pname][data-row="${i}"]`).disabled = false;
+        $('#btn_draw').hidden = "";
+        $(`button[name=btn_unlock][data-col="0"]`).hidden = "hidden";
+    }
 }
 
 
-//確認某選手是否在比賽中
-function isIngame(player){
-    if(isNaN(player))
-        return console.log('Error isIngame');
-    const target = $(`input[name="ingame"][data-row="${player}"]`);
-    if(target)
-        return target.checked;
-}
-
-function getPoints(player, round) {
-    if(isNaN(player))
-        return console.log('Error getPoints');
-    const target = $(`input[name="points"][data-row="${player}"][data-col="${round}"]`);
-    if(target)
-        return parseInt(target.value);
-}
-
-function getOppo(player, round) {
-    if(isNaN(player))
-        return console.log('Error getOppo');
-    const target = $(`input[name="oppo"][data-row="${player}"][data-col="${round}"]`);
-    if(target)
-        return parseInt(target.value);
-}
-
-function getTotalpoints(player){
-    if(isNaN(player))
-        return console.log('Error getTotalpoints');
-    const target = $(`input[name="totalpoints"][data-row="${player}"]`);
-    if(target)
-        return parseInt(target.value);
-}
-
-function getSubpoints(player){
-    if(isNaN(player))
-        return console.log('Error getSubpoints');
-    const target = $(`input[name="subpoints"][data-row="${player}"]`);
-    if(target)
-        return parseInt(target.value);
-}
-
-function setPoints(player, round, points) {
-    if(isNaN(player)) return console.error('aaaa');
-    const target = $(`input[name="points"][data-row="${player}"][data-col="${round}"]`);
-    if(target) target.value = points;
-}
-
-function setOppo(player, round, oppo) {
-    if(isNaN(player))
-        return console.log('Error Oppo');
-    const target = $(`input[name="oppo"][data-row="${player}"][data-col="${round}"]`);
-    if(target)
-        target.value = oppo;
-}
-
-function draw(){
-    noplayers = parseInt($('#noplayers').value);
-    for(let i=1;i<=noplayers;++i){
-        target = Math.floor(Math.random()*noplayers)+1;
+function draw() {
+    for (let i = 1; i <= noplayers; ++i) {
+        target = Math.floor(Math.random() * noplayers) + 1;
         console.log(`going to swap ${i} and ${target}`);
-        temp = $(`input[name="pname"][data-row="${i}"]`).value;
-        $(`input[name="pname"][data-row="${i}"]`).value = $(`input[name="pname"][data-row="${target}"]`).value;
-        $(`input[name="pname"][data-row="${target}"]`).value = temp;
+        const temp = getPName(i);
+        setPName(i, getPName(target));
+        setPName(target, temp);
     }
 }
 
-function clickWin(row, col){
+
+function clickWin(row, col) {
     const oppo = getOppo(row, col);
-    win_points = parseInt($('#win_points').value);
-    if(oppo==0){
+    if (oppo == 0) {
         setPoints(row, col, win_points);
-        $(`input[name="points"][data-row="${row}"][data-col="${col}"]`).parentNode.style.backgroundColor = '#FF0000';
+        setBGColor(row, col, '#F00');
     }
-    if(oppo==-1) setPoints(row, col, 0);
-    if(oppo>0 && oppo<=noplayers){
+    else if (oppo == -1) setPoints(row, col, 0);
+    else if (oppo > 0 && oppo <= noplayers) {
         const points = win_points;
         setPoints(row, col, win_points);
         setPoints(oppo, col, 0);
-        $(`input[name="points"][data-row="${row}"][data-col="${col}"]`).parentNode.style.backgroundColor = '#FF0000';
-        $(`input[name="points"][data-row="${oppo}"][data-col="${col}"]`).parentNode.style.backgroundColor = '#FFFFFF';
+        setBGColor(row, col, '#F00');
+        setBGColor(oppo, col, '#FFF');
     }
 }
 
-function clickEven(row, col){
+function clickEven(row, col) {
     const oppo = getOppo(row, col);
-    win_points = parseInt($('#win_points').value);
-    if(oppo==0){
+    if (oppo == 0) {
         setPoints(row, col, win_points);
+        setBGColor(row, col, '#F00');
         $(`input[name="points"][data-row="${row}"][data-col="${col}"]`).parentNode.style.backgroundColor = '#FF0000';
     }
-    if(oppo==-1) setPoints(row, col, 0);
-    if(oppo>0 && oppo<=noplayers){
-        setPoints(row, col, win_points/2);
-        setPoints(oppo, col, win_points/2);
-        $(`input[name="points"][data-row="${row}"][data-col="${col}"]`).parentNode.style.backgroundColor = '#FF80FF';
-        $(`input[name="points"][data-row="${oppo}"][data-col="${col}"]`).parentNode.style.backgroundColor = '#FF80FF';
+    else if (oppo == -1) setPoints(row, col, 0);
+    else if (oppo > 0 && oppo <= noplayers) {
+        setPoints(row, col, win_points / 2);
+        setPoints(oppo, col, win_points / 2);
+        setBGColor(row, col, '#F8F');
+        setBGColor(oppo, col, '#F8F');
     }
 }
 
-function showNextBtn(round){
+
+function showNextBtn(round) {
     round = parseInt(round);
-    if(round<=norounds && allPointsReady(round)){
-        if(round<norounds)
+    if (round <= norounds && allPointsReady(round)) {
+        if (round < norounds)
             $(`button[data-col="${round+1}"]`).hidden = "";
     }
 }
 
-function allPointsReady(round){
-    for(let i=1;i<=noplayers;++i){
-        if(isNaN(getPoints(i,round)))
-            return false;
+
+function allPointsReady(round) {
+    for (let i = 1; i <= noplayers; ++i) {
+        if (isNaN(getPoints(i,round))) return false;
     }
     return true;
 }
 
-function sortResult(){
+
+function sortResult() {
     place = [];
-    for(let i=1;i<=noplayers;++i)
+    for (let i = 1; i <= noplayers; ++i)
         place[i] = i;
-    for(let i=1;i<=noplayers;++i){
-        for(let j=i+1;j<=noplayers;++j){
-            if(compareResult(place[j], place[i])){
+    for (let i = 1; i <= noplayers; ++i) {
+        for (let j = i + 1; j <= noplayers; ++j) {
+            if (compareResult(place[j], place[i])) {
                 temp = place[j];
                 place[j] = place[i];
                 place[i] = temp;
@@ -473,10 +442,11 @@ function sortResult(){
         }
         final[place[i]]['place'] = i;
     }
-    return;
+    // return;
 }
 
-function compareResult(x, y){
+
+function compareResult(x, y) {
     if (final[x]['total'] > final[y]['total']) return 1;
     if (final[x]['total'] < final[y]['total']) return 0;
 
@@ -490,76 +460,77 @@ function compareResult(x, y){
     return 0;
 }
 
-function outputResult(){
-    win_points = parseInt($('#win_points').value);
 
+function outputResult() {
     //取得總分&輔一
-    for(let i=1;i<=noplayers;++i){
+    for (let i = 1; i <= noplayers; ++i) {
         final[i] = {};
-        final[i]['total'] = parseInt($(`input[name="totalpoints"][data-row="${i}"]`).value);
-        final[i]['sub1'] = parseInt($(`input[name="subpoints"][data-row="${i}"]`).value);
+        final[i]['total'] = getTotalpoints(i);
+        final[i]['sub1'] = getSubpoints(i);
     }
+
     //計算輔二
-    var oppo = 0; //對手編號
-    var oppototal = 0; //對手
-    var p = 0;
-    for(let i=1;i<=noplayers;++i){
+    for (let i = 1; i <= noplayers; ++i) {
         final[i]['sub2'] = 0;
-        for(let j=1;j<=norounds;++j){
-            oppo = getOppo(i, j); // oppo = i 選手第 j 輪之對手
-            if(oppo>0){ //對手編號>0 => 正常對戰，無輪空、無棄戰
-                p = getPoints(i, j); // p = i 選手第 j 輪之得分
-                if(p>0){ //此選手獲勝或平手
-                    final[i]['sub2'] += ((final[oppo]['total'])*p/win_points);
+        for (let j = 1; j <= norounds; ++j) {
+            const oppo = getOppo(i, j); // oppo = i 選手第 j 輪之對手
+            if (oppo > 0) { // 對手編號>0 => 正常對戰，無輪空、無棄戰
+                const p = getPoints(i, j); // p = i 選手第 j 輪之得分
+                if (p > 0) { // 此選手獲勝或平手
+                    final[i]['sub2'] += ((final[oppo]['total']) * p / win_points);
                     console.log(`${i}選手之輔二變更為 ${final[i]['sub2']}`);
                 }
             }
         }
     }
+
     // 計算輔四 => 所遇對手之輔分一
-    for(let i=1;i<=noplayers;++i){
+    for (let i = 1; i <= noplayers; ++i) {
         final[i]['sub4'] = 0;
-        for(let j=1;j<=norounds;++j){
-            oppo = getOppo(i, j);
-            if(oppo>0){
+        for (let j = 1; j <= norounds; ++j) {
+            const oppo = getOppo(i, j);
+            if (oppo > 0) {
                 final[i]['sub4'] += final[oppo]['sub1'];
             }
         }
     }
+
     // 計算輔五 => 所遇對手之輔分二
-    for(let i=1;i<=noplayers;++i){
+    for (let i = 1; i <= noplayers; ++i) {
         final[i]['sub5'] = 0;
-        for(let j=1;j<=norounds;++j){
-            oppo = getOppo(i, j);
-            if(oppo>0){
+        for (let j = 1; j <= norounds; ++j) {
+            const oppo = getOppo(i, j);
+            if (oppo > 0) {
                 final[i]['sub5'] += final[oppo]['sub2'];
             }
         }
     }
+
     // 輔六：（所勝對手之輔分一）＋（所和對手之輔分一的一半）
-    for(let i=1;i<=noplayers;++i){
+    for (let i = 1; i <= noplayers; ++i) {
         final[i]['sub6'] = 0;
-        for(let j=1;j<=norounds;++j){
-            p = getPoints(i, j);
-            oppo = getOppo(i, j);
-            if(p>0 && oppo>0){
+        for (let j = 1; j <= norounds; ++j) {
+            const p = getPoints(i, j);
+            const oppo = getOppo(i, j);
+            if (p > 0 && oppo > 0) {
                 final[i]['sub6'] += (final[j]['sub1'] * p / win_points);
             }
         }
     }
+
     // 輔七：（所勝對手之輔分二）＋（所和對手之輔分二的一半）
-    for(let i=1;i<=noplayers;++i){
+    for (let i = 1; i <= noplayers; ++i) {
         final[i]['sub7'] = 0;
-        for(let j=1;j<=norounds;++j){
-            p = getPoints(i, j);
-            oppo = getOppo(i, j);
-            if(p>0 && oppo>0){
+        for (let j = 1; j <= norounds; ++j) {
+            const p = getPoints(i, j);
+            const oppo = getOppo(i, j);
+            if (p > 0 && oppo > 0) {
                 final[i]['sub7'] += (final[j]['sub2'] * p / win_points);
             }
         }
     }
-    sortResult();
 
+    sortResult();
     console.log(final);
 
     //顯示final result
@@ -581,7 +552,7 @@ function outputResult(){
     );
 
     $('#final_result tbody').replaceChildren();
-    for(let i=1;i<=noplayers;++i){
+    for (let i = 1; i <= noplayers; ++i) {
         pname = $(`input[name=pname][data-row="${i}"]`).value;
         $('#final_result tbody').append(
             createElementFromJsonML(
@@ -602,7 +573,8 @@ function outputResult(){
     }
 }
 
-function hideRow0(){
+
+function hideRow0() {
     /** 不知道為何失效的程式碼
     $$('[data-row="0"]').forEach( element => {
         element.hidden = "hidden";
@@ -610,13 +582,11 @@ function hideRow0(){
     */
 
     $('#main tbody tr').style.display = "none";
-
 }
+
 
 //新增選手
 function addPlayer() {
-    norounds = parseInt($('#norounds').value);
-    noplayers = parseInt($('#noplayers').value);
     ++noplayers;
     $('#noplayers').value = noplayers;
     $(`input[data-row="0"][name="place"]`).value = noplayers+1;
@@ -644,7 +614,7 @@ function addPlayer() {
             ]
         ];
 
-    for(let i=1;i<=norounds;++i){
+    for (let i = 1; i <= norounds; ++i) {
         tr.push(
             ['td',{class: 'round'},
                 ['div',{class: 'd-flex justify-content-around rounded'},
@@ -667,13 +637,13 @@ function addPlayer() {
                         'data-row': noplayers,
                         'data-col': i,
                         onclick: event => {
-                            if($('#fastFill').checked)
+                            if ($('#fastFill').checked)
                                 clickWin(event.target.dataset.row, event.target.dataset.col);
                             showNextBtn(event.target.dataset.col);
                         },
                         oncontextmenu: event => {
                             event.preventDefault();
-                            if($('#fastFill').checked)
+                            if ($('#fastFill').checked)
                                 clickEven(event.target.dataset.row, event.target.dataset.col);
                             showNextBtn(event.target.dataset.col);
                         },
@@ -715,13 +685,11 @@ function addPlayer() {
     $('tbody').appendChild(createElementFromJsonML(tr));
 }
 
+
 function drawTable() {
     if ($('#main tbody').childElementCount > 0
         && !confirm('確認要清空並重製一個新的對戰紀錄表嗎？')
     ) return false;
-
-    const noplayers = parseInt($('#noplayers').value);
-    const norounds = parseInt($('#norounds').value);
 
     $('thead tr').replaceChildren(
         createElementFromJsonML(['th']),
@@ -731,9 +699,9 @@ function drawTable() {
                 type: 'button',
                 class: 'btn btn-sm btn-primary',
                 id: 'btn_draw',
-                onclick: event => {
+                onclick: () => {
                     console.log('開始抽籤');
-                    console.log(parseInt($('#noplayers').value));
+                    console.log(noplayers);
                     draw();
                 }
             }, '抽籤'],
@@ -743,14 +711,12 @@ function drawTable() {
                 name: 'btn_unlock',
                 'data-col': '0',
                 hidden: 'hidden',
-                onclick: event => {
-                    unlock(0);
-                }
+                onclick: () => unlock(0)
             },'解鎖']
         ])
     );
 
-    for(let col = 1; col <= norounds; ++col) {
+    for (let col = 1; col <= norounds; ++col) {
         $('thead tr').appendChild(createElementFromJsonML(
             ['th', {class: 'text-center'},
                 ['button', {
@@ -759,7 +725,7 @@ function drawTable() {
                     name: 'btn_match',
                     hidden: 'hidden',
                     data: {col}, // `{col}` means `{"col": col}`
-                    onclick: event => {
+                    onclick: () => {
                         match(col);
                         lock(col);
                     }
@@ -770,9 +736,7 @@ function drawTable() {
                     name: 'btn_unlock',
                     data: {col},
                     hidden: 'hidden',
-                    onclick: event => {
-                        unlock(col);
-                    }
+                    onclick: () => unlock(col)
                 },'解鎖']
             ]
         ));
@@ -784,7 +748,7 @@ function drawTable() {
                 ['button', {
                     type: 'button',
                     class: 'btn btn-sm btn-primary',
-                    onclick: event => {
+                    onclick: () => {
                         calTotalpoints(norounds);
                         calSubpoints(norounds);
                         sort();
@@ -810,7 +774,7 @@ function drawTable() {
     ));
 
     $('tbody').replaceChildren();
-    for(let row = 0; row <= noplayers; ++row) {
+    for (let row = 0; row <= noplayers; ++row) {
         const tr =
             ['tr', {},
                 ['td', {
@@ -836,7 +800,7 @@ function drawTable() {
                 ]
             ]
         ;
-        for(let col = 1; col <= norounds; ++col) {
+        for (let col = 1; col <= norounds; ++col) {
             tr.push(
                 ['td', {},
                     ['div',{class: 'd-flex justify-content-around rounded'},
@@ -857,14 +821,14 @@ function drawTable() {
                             title: '快速填分：獲勝左鍵，平手右鍵',
                             data: {row, col},
                             onclick: event => {
-                                if($('#fastFill').checked){
+                                if ($('#fastFill').checked) {
                                     clickWin(event.target.dataset.row, event.target.dataset.col);
                                     showNextBtn(event.target.dataset.col);
                                 }
                             },
                             oncontextmenu: event => {
-                                event.preventDefault();
-                                if($('#fastFill').checked){
+                                if ($('#fastFill').checked) {
+                                    event.preventDefault();
                                     clickEven(event.target.dataset.row, event.target.dataset.col);
                                     showNextBtn(event.target.dataset.col);
                                 }
@@ -904,14 +868,14 @@ function drawTable() {
         );
         $('tbody').appendChild(createElementFromJsonML(tr));
     }
-    $('button[data-col="1"]').hidden = "";
-    for(let col=1;col<=norounds;++col){
+    $('button[data-col="1"]').hidden = '';
+    for (let col = 1; col <= norounds; ++col) {
         setOppo(0, col, 0);
         setPoints(0, col, 0);
     }
     $(`input[data-row="0"][name="totalpoints"]`).value = 0;
     $(`input[data-row="0"][name="subpoints"]`).value = 0;
-    $(`input[data-row="0"][name="place"]`).value = noplayers+1;
+    $(`input[data-row="0"][name="place"]`).value = noplayers + 1;
 
     hideRow0();
 
@@ -921,12 +885,10 @@ function drawTable() {
     return true;
 }
 
+
 function downloadJSON() {
     const result = {
-        title: $('#title').value,
-        noplayers: parseInt($('#noplayers').value),
-        norounds: parseInt($('#norounds').value),
-        win_points: parseInt($('#win_points').value),
+        title, noplayers, norounds, win_points,
         fastFill: !!$('#fastFill').value,
         players: [],
         final
@@ -934,30 +896,25 @@ function downloadJSON() {
 
     for (let row = 1; row <= result.noplayers; ++row) {
         result.players[row] = {
-            ingame: !!$(`[name=ingame][data-row="${row}"]`).value,
-            pname: $(`[name=pname][data-row="${row}"]`).value,
+            ingame: isIngame(row),
+            pname: getPName(row),
             oppo: [],
             points: []
         };
-        ['oppo', 'points'].forEach(key => {
-            for (let col = 1; col <= result.norounds; ++col) {
-                const selector = `[name=${key}][data-row="${row}"][data-col="${col}"]`;
-                result.players[row][key][col] = parseInt($(selector).value || 0);
-            }
-        });
+        for (let col = 1; col <= result.norounds; ++col) {
+            result.players[row].oppo[col] = getOppo(row, col);
+            result.players[row].points[col] = getPoints(row, col);
+        }
     }
 
     kongUtil.downloadData(JSON.stringify(result), 'swiss.json', 'application/json');
 }
 
+
 function downloadCSV() {
-    const title = $('#title').value.replace(/"/g, '""');
-    noplayers = parseInt($('#noplayers').value);
-    norounds = parseInt($('#norounds').value);
-    win_points = parseInt($('#win_points').value);
     const emptyTail = ''.padStart(norounds * 2 + 8, ',') + '\r\n';
 
-    let csv = '\ufeff' // BOM
+    let csv = '\ufeff' // BOM for MS Excel
         + `比賽名稱,"${title}",${emptyTail}`
         + `人數,${noplayers},${emptyTail}`
         + `輪數,${norounds},${emptyTail}`
@@ -969,12 +926,12 @@ function downloadCSV() {
 
     for (let row = 1; row <= noplayers; ++row) {
         csv += row + ','
-            + ($(`[name=ingame][data-row="${row}"]`).value ? '是' : '否') + ','
-            + '"' + ($(`[name=pname][data-row="${row}"]`).value).replace(/"/g, '""') + '",'
+            + (isIngame(row) ? '是' : '否') + ','
+            + '"' + getPName(row).replace(/"/g, '""') + '",'
         ;
         for (let col = 1; col <= norounds; ++col) {
-            csv += parseInt($(`[name=oppo][data-row="${row}"][data-col="${col}"]`).value || 0) + ','
-                + parseInt($(`[name=points][data-row="${row}"][data-col="${col}"]`).value || 0) + ','
+            csv += getOppo(row, col) + ','
+                + getPoints(row, col) + ','
             ;
         }
 
@@ -990,7 +947,9 @@ function downloadCSV() {
     kongUtil.downloadData(csv, 'swiss.csv', 'text/csv');
 }
 
+
 async function loadJSON(file) {
+    let data;
     try {
         const json = await kongUtil.readFile(file, 'text');
         data = JSON.parse(json);
@@ -1002,22 +961,22 @@ async function loadJSON(file) {
 
     try {
         ['title', 'noplayers', 'norounds', 'win_points'].forEach(key => {
+            globalThis[key] = data[key];
             $(`#${key}`).value = data[key].toString();
         });
         $('#fastFill').checked = data.fastFill;
 
         if (!drawTable()) return console.debug('放棄載入');
 
-        for (let row = 1; row <= data.noplayers; ++row) {
+        for (let row = 1; row <= noplayers; ++row) {
             const player = data.players[row];
             $(`[name=ingame][data-row="${row}"]`).checked = player.ingame;
             $(`[name=pname][data-row="${row}"]`).value = player.pname;
-            ['oppo', 'points'].forEach(key => {
-                for (let col = 1; col <= data.norounds; ++col) {
-                    const selector = `[name=${key}][data-row="${row}"][data-col="${col}"]`;
-                    $(selector).value = player[key][col].toString();
-                }
-            });
+
+            for (let col = 1; col <= norounds; ++col) {
+                setOppo(row, col, player.oppo[col]);
+                setPoints(row, col, player.points[col]);
+            }
         }
     }
     catch (err) {
@@ -1037,6 +996,17 @@ async function loadJSON(file) {
  * 主程式
  */
 
+['title', 'noplayers', 'norounds', 'win_points'].forEach(varName => {
+    const target = $(`input#${varName}`);
+    target.value = globalThis[varName].toString();
+    listen(target, 'input', () => {
+        globalThis[varName] = (varName === 'title')
+            ? target.value
+            : parseInt(target.value)
+        ;
+    });
+});
+
 listen('#draw_table', 'click', drawTable);
 listen('#add_player', 'click', addPlayer);
 listen('#downloadJSON', 'click', downloadJSON);
@@ -1045,7 +1015,7 @@ listen('#downloadCSV', 'click', downloadCSV);
 listen('#loadJSON', 'change', event => {
     if (!event.target.files.length) return console.debug('沒有選擇檔案');
     loadJSON(event.target.files[0])
-    .finally(() => event.target.files = null);
+    .finally(() => event.target.value = null);
 });
 
 drawTable();
