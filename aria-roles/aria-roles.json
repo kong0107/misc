@@ -1,0 +1,552 @@
+[
+    {
+        "html": ["abbr", "audio", "base", "br", "canvas", "cite", "col", "colgroup", "figcaption"]
+    },
+    {
+        "role": "alert",
+        "description": "A type of live region with important, and usually time-sensitive, information. See related alertdialog and status.",
+        "superclasses": ["section"],
+        "subclasses": ["alertdialog"]
+    },
+    {
+        "role": "alertdialog",
+        "description": "A type of dialog that contains an alert message, where initial focus goes to an element within the dialog. See related alert and dialog.",
+        "superclasses": ["alert", "dialog"]
+    },
+    {
+        "role": "application",
+        "description": "A structure containing one or more focusable elements requiring user input, such as keyboard or gesture events, that do not follow a standard interaction pattern supported by a widget role.",
+        "superclasses": ["structure"]
+    },
+    {
+        "role": "article",
+        "description": "A section of a page that consists of a composition that forms an independent part of a document, page, or site.",
+        "superclasses": ["document"],
+        "html": ["article"]
+    },
+    {
+        "role": "banner",
+        "description": "A landmark that contains mostly site-oriented content, rather than page-specific content.",
+        "superclasses": ["landmark"]
+    },
+    {
+        "role": "blockquote",
+        "description": "A section of content that is quoted from another source.",
+        "superclasses": ["section"],
+        "html": ["blockquote"]
+    },
+    {
+        "role": "button",
+        "description": "An input that allows for user-triggered actions when clicked or pressed. See related link.",
+        "superclasses": ["command"],
+        "html": ["button"]
+    },
+    {
+        "role": "caption",
+        "description": "Visible content that names, and may also describe, a figure, table, grid, or treegrid.",
+        "superclasses": ["section"],
+        "html": ["caption"]
+    },
+    {
+        "role": "cell",
+        "description": "A cell in a tabular container. See related gridcell.",
+        "superclasses": ["section"],
+        "subclasses": ["columnheader", "gridcell", "rowheader"],
+        "html": ["td"]
+    },
+    {
+        "role": "checkbox",
+        "description": "A checkable input that has three possible values: true, false, or mixed.",
+        "superclasses": ["input"],
+        "subclasses": ["switch"],
+        "html": ["input[type=checkbox]"]
+    },
+    {
+        "role": "code",
+        "description": "A section whose content represents a fragment of computer code.",
+        "superclasses": ["section"],
+        "html": ["code"]
+    },
+    {
+        "role": "columnheader",
+        "description": "A cell containing header information for a column.",
+        "superclasses": ["cell", "gridcell", "sectionhead"],
+        "html": ["tr[scope=col]"]
+    },
+    {
+        "role": "combobox",
+        "description": "An input that controls another element, such as a listbox or grid, that can dynamically pop up to help the user set the value of the input.",
+        "superclasses": ["input"],
+        "html": ["select"]
+    },
+    {
+        "role": "command",
+        "description": "A form of widget that performs an action but does not receive input data.",
+        "superclasses": ["widget"],
+        "subclasses": ["button", "link", "menuitem"]
+    },
+    {
+        "role": "complementary",
+        "description": "A landmark that is designed to be complementary to the main content at a similar level in the DOM hierarchy, but remaining meaningful when separated from the main content.",
+        "superclasses": ["landmark"],
+        "html": ["aside"]
+    },
+    {
+        "role": "composite",
+        "description": "A widget that may contain navigable descendants or owned children.",
+        "superclasses": ["widget"],
+        "subclasses": ["grid", "select", "spinbutton", "tablist"]
+    },
+    {
+        "role": "contentinfo",
+        "description": "A landmark that contains information about the parent document.",
+        "superclasses": ["landmark"],
+        "html": ["footer"]
+    },
+    {
+        "role": "definition",
+        "description": "A definition of a term or concept. See related term.",
+        "superclasses": ["section"]
+    },
+    {
+        "role": "deletion",
+        "description": "A deletion contains content that is marked as removed or content that is being suggested for removal. See related insertion.",
+        "superclasses": ["section"],
+        "html": ["del"]
+    },
+    {
+        "role": "dialog",
+        "description": "A dialog is a descendant window of the primary window of a web application. For HTML pages, the primary application window is the entire web document, i.e., the body element.",
+        "superclasses": ["window"],
+        "subclasses": ["alertdialog"],
+        "html": ["dialog"]
+    },
+    {
+        "role": "directory",
+        "description": "[Deprecated in ARIA 1.2] A list of references to members of a group, such as a static table of contents.",
+        "superclasses": ["list"]
+    },
+    {
+        "role": "document",
+        "description": "An element containing content that assistive technology users may want to browse in a reading mode.",
+        "superclasses": ["structure"],
+        "subclasses": ["article"]
+    },
+    {
+        "role": "emphasis",
+        "description": "One or more emphasized characters. See related strong.",
+        "superclasses": ["em"],
+        "html": ["em"]
+    },
+    {
+        "role": "feed",
+        "description": "A scrollable list of articles where scrolling may cause articles to be added to or removed from either end of the list.",
+        "superclasses": ["list"]
+    },
+    {
+        "role": "figure",
+        "description": "A perceivable section of content that typically contains a graphical document, images, code snippets, or example text. The parts of a figure MAY be user-navigable.",
+        "superclasses": ["section"],
+        "html": ["figure"]
+    },
+    {
+        "role": "form",
+        "description": "A landmark region that contains a collection of items and objects that, as a whole, combine to create a form. See related search.",
+        "superclasses": ["landmark"],
+        "html": ["form"]
+    },
+    {
+        "role": "generic",
+        "description": "A nameless container element that has no semantic meaning on its own.",
+        "superclasses": ["structure"],
+        "html": ["b", "bdi", "bdo", "body", "div", "span", "a:not([href])", "area:not([href])"]
+    },
+    {
+        "role": "grid",
+        "description": "A composite widget containing a collection of one or more rows with one or more cells where some or all cells in the grid are focusable by using methods of two-dimensional navigation, such as directional arrow keys.",
+        "superclasses": ["composite", "table"],
+        "subclasses": ["treegrid"],
+        "html": ["table"]
+    },
+    {
+        "role": "gridcell",
+        "description": "A cell in a grid or treegrid.",
+        "superclasses": ["cell", "widget"],
+        "subclasses": ["columnheader", "rowheader"],
+        "html": ["td"]
+    },
+    {
+        "role": "group",
+        "description": "A set of user interface objects that is not intended to be included in a page summary or table of contents by assistive technologies.",
+        "superclasses": ["section"],
+        "subclasses": ["row", "select", "toolbar"],
+        "html": ["address", "fieldset"]
+    },
+    {
+        "role": "heading",
+        "description": "A heading for a section of the page.",
+        "superclasses": ["sectionhead"],
+        "html": ["h1", "h2", "h3", "h4", "h5", "h6"]
+    },
+    {
+        "role": "img",
+        "description": "A container for a collection of elements that form an image.",
+        "superclasses": ["section"],
+        "html": ["img"]
+    },
+    {
+        "role": "input",
+        "description": "A generic type of widget that allows user input.",
+        "superclasses": ["widget"],
+        "subclasses": ["checkbox", "combobox", "option", "radio", "slider", "spinbutton", "textbox"],
+        "html": ["input"]
+    },
+    {
+        "role": "insertion",
+        "description": "An insertion contains content that is marked as added or content that is being suggested for addition. See related deletion.",
+        "superclasses": ["section"],
+        "html": ["ins"]
+    },
+    {
+        "role": "landmark",
+        "description": "A perceivable section containing content that is relevant to a specific, author-specified  purpose and sufficiently important that users will likely want to be able to navigate to the section easily and to have it listed in a summary of the page. Such a page summary could be generated dynamically by a user agent or assistive technology.",
+        "superclasses": ["section"],
+        "subclasses": ["banner", "complementary", "contentinfo", "form", "main", "navigation", "region", "search"]
+    },
+    {
+        "role": "link",
+        "description": "An interactive reference to an internal or external resource that, when activated, causes the user agent to navigate to that resource. See related button.",
+        "superclasses": ["command"],
+        "html": ["a[href]", "area[href]"]
+    },
+    {
+        "role": "list",
+        "description": "A section containing listitem elements. See related listbox.",
+        "superclasses": ["section"],
+        "subclasses": ["directory", "feed"],
+        "html": ["ul", "ol"]
+    },
+    {
+        "role": "listbox",
+        "description": "A widget that allows the user to select one or more items from a list of choices. See related combobox and list.",
+        "superclasses": ["select"],
+        "html": ["select"]
+    },
+    {
+        "role": "listitem",
+        "description": "A single item in a list or directory.",
+        "superclasses": ["section"],
+        "subclasses": ["treeitem"],
+        "html": ["li"]
+    },
+    {
+        "role": "log",
+        "description": "A type of live region where new information is added in meaningful order and old information may disappear. See related marquee.",
+        "superclasses": ["section"]
+    },
+    {
+        "role": "main",
+        "description": "A landmark containing the main content of a document.",
+        "superclasses": ["landmark"],
+        "html": ["main"]
+    },
+    {
+        "role": "marquee",
+        "description": "A type of live region where non-essential information changes frequently. See related log.",
+        "superclasses": ["section"]
+    },
+    {
+        "role": "math",
+        "description": "Content that represents a mathematical expression.",
+        "superclasses": ["section"]
+    },
+    {
+        "role": "meter",
+        "description": "An element that represents a scalar measurement within a known range, or a fractional value. See related progressbar.",
+        "superclasses": ["range"],
+        "html": ["meter"]
+    },
+    {
+        "role": "menu",
+        "description": "A type of widget that offers a list of choices to the user.",
+        "superclasses": ["select"],
+        "subclasses": ["menubar"]
+    },
+    {
+        "role": "menubar",
+        "description": "A presentation of menu that usually remains visible and is usually presented horizontally.",
+        "superclasses": ["menu"]
+    },
+    {
+        "role": "menuitem",
+        "description": "An option in a set of choices contained by a menu or menubar.",
+        "superclasses": ["command"],
+        "subclasses": ["menuitemcheckbox"]
+    },
+    {
+        "role": "menuitemcheckbox",
+        "description": "A menuitem with a checkable state whose possible values are true, false, or mixed.",
+        "superclasses": ["menuitem"],
+        "subclasses": ["menuitemradio"]
+    },
+    {
+        "role": "menuitemradio",
+        "description": "A checkable menuitem in a set of elements with the same role, only one of which can be checked at a time.",
+        "superclasses": ["menuitemcheckbox"],
+        "subclasses": ["menuitem"]
+    },
+    {
+        "role": "navigation",
+        "description": "A landmark containing a collection of navigational elements (usually links) for navigating the document or related documents.",
+        "superclasses": ["landmark"],
+        "html": ["nav"]
+    },
+    {
+        "role": "none",
+        "description": "An element whose implicit native role semantics will not be mapped to the accessibility API. See synonym presentation.",
+        "superclasses": ["structure"]
+    },
+    {
+        "role": "note",
+        "description": "A section whose content is parenthetic or ancillary to the main content of the resource.",
+        "superclasses": ["section"]
+    },
+    {
+        "role": "option",
+        "description": "A selectable item in a listbox.",
+        "superclasses": ["input"],
+        "subclasses": ["treeitem"],
+        "html": ["option"]
+    },
+    {
+        "role": "paragraph",
+        "description": "A paragraph of content.",
+        "superclasses": ["section"],
+        "html": ["p"]
+    },
+    {
+        "role": "presentation",
+        "description": "An element whose implicit native role semantics will not be mapped to the accessibility API. See synonym none.",
+        "superclasses": ["structure"]
+    },
+    {
+        "role": "progressbar",
+        "description": "An element that displays the progress status for tasks that take a long time.",
+        "superclasses": ["range", "widget"],
+        "html": ["progress"]
+    },
+    {
+        "role": "radio",
+        "description": "A checkable input in a group of elements with the same role, only one of which can be checked at a time.",
+        "superclasses": ["input"],
+        "html": ["input[type=radio]"]
+    },
+    {
+        "role": "radiogroup",
+        "description": "A group of radio buttons.",
+        "superclasses": ["select"]
+    },
+    {
+        "role": "range",
+        "description": "An element representing a range of values.",
+        "superclasses": ["structure"],
+        "subclasses": ["meter", "progressbar", "scrollbar", "slider", "spinbutton"]
+    },
+    {
+        "role": "region",
+        "description": "A landmark containing content that is relevant to a specific, author-specified  purpose and sufficiently important that users will likely want to be able to navigate to the section easily and to have it listed in a summary of the page. Such a page summary could be generated dynamically by a user agent or assistive technology.",
+        "superclasses": ["landmark"],
+        "html": ["section"]
+    },
+    {
+        "role": "roletype",
+        "description": "The base role from which all other roles inherit.",
+        "subclasses": ["structure", "widget", "window"]
+    },
+    {
+        "role": "row",
+        "description": "A row of cells in a tabular container.",
+        "superclasses": ["group", "widget"],
+        "html": ["tr"]
+    },
+    {
+        "role": "rowgroup",
+        "description": "A structure containing one or more row elements in a tabular container.",
+        "superclasses": ["structure"],
+        "html": ["thead", "tbody", "tfoot"]
+    },
+    {
+        "role": "rowheader",
+        "description": "A cell containing header information for a row.",
+        "superclasses": ["cell", "gridcell", "sectionhead"],
+        "html": ["th[scope=row]"]
+    },
+    {
+        "role": "scrollbar",
+        "description": "A graphical object that controls the scrolling of content within a viewing area, regardless of whether the content is fully displayed within the viewing area.",
+        "superclasses": ["range", "widget"]
+    },
+    {
+        "role": "search",
+        "description": "A landmark region that contains a collection of items and objects that, as a whole, combine to create a search facility. See related form and searchbox.",
+        "superclasses": ["landmark"]
+    },
+    {
+        "role": "searchbox",
+        "description": "A type of textbox intended for specifying search criteria. See related textbox and search.",
+        "superclasses": ["textbox"],
+        "html": ["input[type=search]"]
+    },
+    {
+        "role": "section",
+        "description": "A renderable structural containment unit in a document or application.",
+        "superclasses": ["structure"]
+    },
+    {
+        "role": "sectionhead",
+        "description": "A structure that labels or summarizes the topic of its related section.",
+        "superclasses": ["structure"]
+    },
+    {
+        "role": "select",
+        "description": "A form widget that allows the user to make selections from a set of choices.",
+        "superclasses": ["composite", "group"],
+        "subclasses": ["listbox", "menu", "radiogroup", "tree"]
+    },
+    {
+        "role": "separator",
+        "description": "A divider that separates and distinguishes sections of content or groups of menuitems.",
+        "superclasses": ["structure", "widget"],
+        "html": ["hr"]
+    },
+    {
+        "role": "slider",
+        "description": "An input where the user selects a value from within a given range.",
+        "superclasses": ["input", "range"]
+    },
+    {
+        "role": "spinbutton",
+        "description": "A form of range that expects the user to select from among discrete choices.",
+        "superclasses": ["composite", "input", "range"]
+    },
+    {
+        "role": "status",
+        "description": "A type of live region whose content is advisory information for the user but is not important enough to justify an alert, often but not necessarily presented as a status bar.",
+        "superclasses": ["section"],
+        "subclasses": ["timer"]
+    },
+    {
+        "role": "strong",
+        "description": "Content that is important, serious, or urgent. See related emphasis.",
+        "superclasses": ["section"],
+        "html": ["strong"]
+    },
+    {
+        "role": "structure",
+        "description": "A document structural element.",
+        "superclasses": ["roletype"],
+        "subclasses": ["application", "document", "generic", "presentation", "range", "rowgroup", "section", "sectionhead", "separator"]
+    },
+    {
+        "role": "subscript",
+        "description": "One or more subscripted characters. See related superscript.",
+        "superclasses": ["section"],
+        "html": ["sub"]
+    },
+    {
+        "role": "superscript",
+        "description": "One or more superscripted characters.  See related superscript.",
+        "superclasses": ["section"],
+        "html": ["sup"]
+    },
+    {
+        "role": "switch",
+        "description": "A type of checkbox that represents on/off values, as opposed to checked/unchecked values. See related checkbox.",
+        "superclasses": ["checkbox"],
+        "html": ["input[type=checkbox]"]
+    },
+    {
+        "role": "tab",
+        "description": "A grouping label providing a mechanism for selecting the tab content that is to be rendered to the user.",
+        "superclasses": ["sectionhead", "widget"]
+    },
+    {
+        "role": "table",
+        "description": "A section containing data arranged in rows and columns. See related grid.",
+        "superclasses": ["section"],
+        "subclasses": ["grid"],
+        "html": ["table"]
+    },
+    {
+        "role": "tablist",
+        "description": "A list of tab elements, which are references to tabpanel elements.",
+        "superclasses": ["composite"]
+    },
+    {
+        "role": "tabpanel",
+        "description": "A container for the resources associated with a tab, where each tab is contained in a tablist.",
+        "superclasses": ["section"]
+    },
+    {
+        "role": "term",
+        "description": "A word or phrase with a corresponding definition. See related definition.",
+        "superclasses": ["section"],
+        "html": ["dfn"]
+    },
+    {
+        "role": "textbox",
+        "description": "A type of input that allows free-form text as its value.",
+        "superclasses": ["input"],
+        "subclasses": ["searchbox"],
+        "html": ["textarea", "input[type=text]"]
+    },
+    {
+        "role": "time",
+        "description": "An element that represents a specific point in time.",
+        "superclasses": ["section"],
+        "html": ["time"]
+    },
+    {
+        "role": "timer",
+        "description": "A type of live region containing a numerical counter which indicates an amount of elapsed time from a start point, or the time remaining until an end point.",
+        "superclasses": ["status"]
+    },
+    {
+        "role": "toolbar",
+        "description": "A collection of commonly used function buttons or controls represented in compact visual form.",
+        "superclasses": ["group"]
+    },
+    {
+        "role": "tooltip",
+        "description": "A contextual popup that displays a description for an element.",
+        "superclasses": ["section"]
+    },
+    {
+        "role": "tree",
+        "description": "A widget that allows the user to select one or more items from a hierarchically organized collection.",
+        "superclasses": ["select"],
+        "subclasses": ["treegrid"]
+    },
+    {
+        "role": "treegrid",
+        "description": "A grid whose rows can be expanded and collapsed in the same manner as for a tree.",
+        "superclasses": ["grid", "tree"]
+    },
+    {
+        "role": "treeitem",
+        "description": "An option item of a tree. This is an element within a tree that may be expanded or collapsed if it contains a sub-level group of tree item elements.",
+        "superclasses": ["listitem", "option"]
+    },
+    {
+        "role": "widget",
+        "description": "An interactive component of a graphical user interface (GUI).",
+        "superclasses": ["roletype"],
+        "subclasses": ["command", "composite", "gridcell", "input", "progressbar", "row", "scrollbar", "separator", "tab"]
+    },
+    {
+        "role": "window",
+        "description": "A browser or application window.",
+        "superclasses": ["roletype"],
+        "subclasses": ["dialog"]
+    }
+]

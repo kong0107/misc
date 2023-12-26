@@ -1,0 +1,482 @@
+[
+    {
+        "tagName": "html",
+        "typeText": "The document element"
+    },
+    {
+        "tagName": "head",
+        "typeText": "Document metadata"
+    },
+    {
+        "tagName": "title",
+        "typeText": "Document metadata"
+    },
+    {
+        "tagName": "base",
+        "typeText": "Document metadata"
+    },
+    {
+        "tagName": "link",
+        "typeText": "Document metadata"
+    },
+    {
+        "tagName": "meta",
+        "typeText": "Document metadata"
+    },
+    {
+        "tagName": "style",
+        "typeText": "Document metadata"
+    },
+    {
+        "tagName": "body",
+        "typeText": "Sections"
+    },
+    {
+        "tagName": "article",
+        "typeText": "Sections"
+    },
+    {
+        "tagName": "section",
+        "typeText": "Sections"
+    },
+    {
+        "tagName": "nav",
+        "typeText": "Sections"
+    },
+    {
+        "tagName": "aside",
+        "typeText": "Sections"
+    },
+    {
+        "tagName": "h1",
+        "typeText": "Sections"
+    },
+    {
+        "tagName": "h2",
+        "typeText": "Sections"
+    },
+    {
+        "tagName": "h3",
+        "typeText": "Sections"
+    },
+    {
+        "tagName": "h4",
+        "typeText": "Sections"
+    },
+    {
+        "tagName": "h5",
+        "typeText": "Sections"
+    },
+    {
+        "tagName": "h6",
+        "typeText": "Sections"
+    },
+    {
+        "tagName": "hgroup",
+        "typeText": "Sections"
+    },
+    {
+        "tagName": "header",
+        "typeText": "Sections"
+    },
+    {
+        "tagName": "footer",
+        "typeText": "Sections"
+    },
+    {
+        "tagName": "address",
+        "typeText": "Sections"
+    },
+    {
+        "tagName": "p",
+        "typeText": "Grouping content"
+    },
+    {
+        "tagName": "hr",
+        "typeText": "Grouping content"
+    },
+    {
+        "tagName": "pre",
+        "typeText": "Grouping content"
+    },
+    {
+        "tagName": "blockquote",
+        "typeText": "Grouping content"
+    },
+    {
+        "tagName": "ol",
+        "typeText": "Grouping content"
+    },
+    {
+        "tagName": "ul",
+        "typeText": "Grouping content"
+    },
+    {
+        "tagName": "menu",
+        "typeText": "Grouping content"
+    },
+    {
+        "tagName": "li",
+        "typeText": "Grouping content"
+    },
+    {
+        "tagName": "dl",
+        "typeText": "Grouping content"
+    },
+    {
+        "tagName": "dt",
+        "typeText": "Grouping content"
+    },
+    {
+        "tagName": "dd",
+        "typeText": "Grouping content"
+    },
+    {
+        "tagName": "figure",
+        "typeText": "Grouping content"
+    },
+    {
+        "tagName": "figcaption",
+        "typeText": "Grouping content"
+    },
+    {
+        "tagName": "main",
+        "typeText": "Grouping content"
+    },
+    {
+        "tagName": "search",
+        "typeText": "Grouping content"
+    },
+    {
+        "tagName": "div",
+        "typeText": "Grouping content"
+    },
+    {
+        "tagName": "a",
+        "typeText": "Text-level semantics"
+    },
+    {
+        "tagName": "em",
+        "typeText": "Text-level semantics"
+    },
+    {
+        "tagName": "strong",
+        "typeText": "Text-level semantics"
+    },
+    {
+        "tagName": "small",
+        "typeText": "Text-level semantics"
+    },
+    {
+        "tagName": "s",
+        "typeText": "Text-level semantics"
+    },
+    {
+        "tagName": "cite",
+        "typeText": "Text-level semantics"
+    },
+    {
+        "tagName": "q",
+        "typeText": "Text-level semantics"
+    },
+    {
+        "tagName": "dfn",
+        "typeText": "Text-level semantics"
+    },
+    {
+        "tagName": "abbr",
+        "typeText": "Text-level semantics"
+    },
+    {
+        "tagName": "ruby",
+        "typeText": "Text-level semantics"
+    },
+    {
+        "tagName": "rt",
+        "typeText": "Text-level semantics"
+    },
+    {
+        "tagName": "rp",
+        "typeText": "Text-level semantics"
+    },
+    {
+        "tagName": "data",
+        "typeText": "Text-level semantics"
+    },
+    {
+        "tagName": "time",
+        "typeText": "Text-level semantics"
+    },
+    {
+        "tagName": "code",
+        "typeText": "Text-level semantics"
+    },
+    {
+        "tagName": "var",
+        "typeText": "Text-level semantics"
+    },
+    {
+        "tagName": "samp",
+        "typeText": "Text-level semantics"
+    },
+    {
+        "tagName": "kbd",
+        "typeText": "Text-level semantics"
+    },
+    {
+        "tagName": "sub",
+        "typeText": "Text-level semantics"
+    },
+    {
+        "tagName": "sup",
+        "typeText": "Text-level semantics"
+    },
+    {
+        "tagName": "i",
+        "typeText": "Text-level semantics"
+    },
+    {
+        "tagName": "b",
+        "typeText": "Text-level semantics"
+    },
+    {
+        "tagName": "u",
+        "typeText": "Text-level semantics"
+    },
+    {
+        "tagName": "mark",
+        "typeText": "Text-level semantics"
+    },
+    {
+        "tagName": "bdi",
+        "typeText": "Text-level semantics"
+    },
+    {
+        "tagName": "bdo",
+        "typeText": "Text-level semantics"
+    },
+    {
+        "tagName": "span",
+        "typeText": "Text-level semantics"
+    },
+    {
+        "tagName": "br",
+        "typeText": "Text-level semantics"
+    },
+    {
+        "tagName": "wbr",
+        "typeText": "Text-level semantics"
+    },
+    {
+        "tagName": "a",
+        "typeText": "Links"
+    },
+    {
+        "tagName": "area",
+        "typeText": "Links"
+    },
+    {
+        "tagName": "a",
+        "typeText": "Links"
+    },
+    {
+        "tagName": "area",
+        "typeText": "Links"
+    },
+    {
+        "tagName": "ins",
+        "typeText": "Edits"
+    },
+    {
+        "tagName": "del",
+        "typeText": "Edits"
+    },
+    {
+        "tagName": "ins",
+        "typeText": "Edits"
+    },
+    {
+        "tagName": "del",
+        "typeText": "Edits"
+    },
+    {
+        "tagName": "picture",
+        "typeText": "Embedded content"
+    },
+    {
+        "tagName": "source",
+        "typeText": "Embedded content"
+    },
+    {
+        "tagName": "img",
+        "typeText": "Embedded content"
+    },
+    {
+        "tagName": "iframe",
+        "typeText": "Embedded content"
+    },
+    {
+        "tagName": "embed",
+        "typeText": "Embedded content"
+    },
+    {
+        "tagName": "object",
+        "typeText": "Embedded content"
+    },
+    {
+        "tagName": "video",
+        "typeText": "Embedded content"
+    },
+    {
+        "tagName": "audio",
+        "typeText": "Embedded content"
+    },
+    {
+        "tagName": "track",
+        "typeText": "Embedded content"
+    },
+    {
+        "tagName": "map",
+        "typeText": "Embedded content"
+    },
+    {
+        "tagName": "area",
+        "typeText": "Embedded content"
+    },
+    {
+        "tagName": "table",
+        "typeText": "Tabular data"
+    },
+    {
+        "tagName": "caption",
+        "typeText": "Tabular data"
+    },
+    {
+        "tagName": "colgroup",
+        "typeText": "Tabular data"
+    },
+    {
+        "tagName": "col",
+        "typeText": "Tabular data"
+    },
+    {
+        "tagName": "tbody",
+        "typeText": "Tabular data"
+    },
+    {
+        "tagName": "thead",
+        "typeText": "Tabular data"
+    },
+    {
+        "tagName": "tfoot",
+        "typeText": "Tabular data"
+    },
+    {
+        "tagName": "tr",
+        "typeText": "Tabular data"
+    },
+    {
+        "tagName": "td",
+        "typeText": "Tabular data"
+    },
+    {
+        "tagName": "th",
+        "typeText": "Tabular data"
+    },
+    {
+        "tagName": "td",
+        "typeText": "Tabular data"
+    },
+    {
+        "tagName": "th",
+        "typeText": "Tabular data"
+    },
+    {
+        "tagName": "form",
+        "typeText": "Forms"
+    },
+    {
+        "tagName": "label",
+        "typeText": "Forms"
+    },
+    {
+        "tagName": "input",
+        "typeText": "Forms"
+    },
+    {
+        "tagName": "button",
+        "typeText": "Forms"
+    },
+    {
+        "tagName": "select",
+        "typeText": "Forms"
+    },
+    {
+        "tagName": "datalist",
+        "typeText": "Forms"
+    },
+    {
+        "tagName": "optgroup",
+        "typeText": "Forms"
+    },
+    {
+        "tagName": "option",
+        "typeText": "Forms"
+    },
+    {
+        "tagName": "textarea",
+        "typeText": "Forms"
+    },
+    {
+        "tagName": "output",
+        "typeText": "Forms"
+    },
+    {
+        "tagName": "progress",
+        "typeText": "Forms"
+    },
+    {
+        "tagName": "meter",
+        "typeText": "Forms"
+    },
+    {
+        "tagName": "fieldset",
+        "typeText": "Forms"
+    },
+    {
+        "tagName": "legend",
+        "typeText": "Forms"
+    },
+    {
+        "tagName": "details",
+        "typeText": "Interactive elements"
+    },
+    {
+        "tagName": "summary",
+        "typeText": "Interactive elements"
+    },
+    {
+        "tagName": "dialog",
+        "typeText": "Interactive elements"
+    },
+    {
+        "tagName": "script",
+        "typeText": "Scripting"
+    },
+    {
+        "tagName": "noscript",
+        "typeText": "Scripting"
+    },
+    {
+        "tagName": "template",
+        "typeText": "Scripting"
+    },
+    {
+        "tagName": "slot",
+        "typeText": "Scripting"
+    },
+    {
+        "tagName": "canvas",
+        "typeText": "Scripting"
+    }
+]

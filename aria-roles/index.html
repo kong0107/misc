@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Semantics of ARIA roles and HTML tags</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+</head>
+<body>
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">HTML element</th>
+                <th scope="col">implicit role</th>
+                <th scope="col">allowed other role</th>
+                <th scope="col">
+                    forbidden<br>attributes
+                    <br><small>and those not recommended</small>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <th scope="row">a[href]</th>
+                <td>link</td>
+                <td>button, checkbox, menuitem, menuitemcheckbox, menuitemradio, option, radio, switch, tab, treeitem</td>
+                <td>aria-disabled=true</td>
+            </tr>
+            <tr>
+                <th scope="row">a:not([href]), b, bdi, bdo, data, div, i, pre, q, samp, small, span, u</th>
+                <td>generic</td>
+                <td>any</td>
+                <td>aria-label, aria-labelledby</td>
+            </tr>
+            <tr>
+                <th scope="row">abbr, cite, kbd, mark, rp, rt, var</th>
+                <td>null</td>
+                <td>any</td>
+                <td>aria-label, aria-labelledby</td>
+            </tr>
+            <tr>
+                <th scope="row">address, hgroup</th>
+                <td>group</td>
+                <td>any</td>
+                <td></td>
+            </tr>
+            <tr>
+                <th scope="row">area[href]</th>
+                <td>link</td>
+                <td>null</td>
+                <td>role</td>
+            </tr>
+            <tr>
+                <th scope="row">area:not([href])</th>
+                <td>generic</td>
+                <td>button, link</td>
+                <td>aria-label, aria-labelledby</td>
+            </tr>
+            <tr>
+                <th scope="row">article</th>
+                <td>article</td>
+                <td>application, document, feed, main, none, presentation, region</td>
+                <td></td>
+            </tr>
+            <tr>
+                <th scope="row">aside</th>
+                <td>complementary</td>
+                <td>feed, none, note, presentation, region, search</td>
+                <td></td>
+            </tr>
+            <tr>
+                <th scope="row">audio, video</th>
+                <td>null</td>
+                <td>application</td>
+                <td></td>
+            </tr>
+            <tr>
+                <th scope="row">base, col, colgroup, head, input[type=hidden], link, map, meta, noscript, param, script, slot, source, style, template, title, track</th>
+                <td>null</td>
+                <td>null</td>
+                <td>role, aria-*</td>
+            </tr>
+            <tr>
+                <th scope="row">blockquote</th>
+                <td>blockquote</td>
+                <td>any</td>
+                <td></td>
+            </tr>
+            <tr>
+                <th scope="row">body</th>
+                <td>generic</td>
+                <td>null</td>
+                <td>role, aria-label, aria-labelledby, aria-hidden=true</td>
+            </tr>
+            <tr>
+                <th scope="row">br, wbr</th>
+                <td>null</td>
+                <td>none, presentation</td>
+                <td>all <code>aria-*</code> except <code>aria-hidden</code></td>
+            </tr>
+            <tr>
+                <th scope="row">button, input[type=button], input[type=image]</th>
+                <td>button</td>
+                <td>checkbox, combobox, gridcell, link, menuitem, menuitemcheckbox, menuitemradio, option, radio, separator, slider, switch, tab, treeitem</td>
+                <td></td>
+            </tr>
+            <tr>
+                <th scope="row">canvas, ruby</th>
+                <td>null</td>
+                <td>any</td>
+                <td></td>
+            </tr>
+            <tr>
+                <th scope="row">caption</th>
+                <td>caption</td>
+                <td>null</td>
+                <td>role, aria-label, aria-labelledby</td>
+            </tr>
+            <tr>
+                <th scope="row">code</th>
+                <td>code</td>
+                <td>any</td>
+                <td>aria-label, aria-labelledby</td>
+            </tr>
+            <tr>
+                <th scope="row">datalist</th>
+                <td>listbox</td>
+                <td>null</td>
+                <td>role, aria-*</td>
+            </tr>
+            <tr>
+                <th scope="row">dd, label, legend, summary</th>
+                <td>null</td>
+                <td>null</td>
+                <td>role</td>
+            </tr>
+            <tr>
+                <th scope="row">del, s</th>
+                <td>deletion</td>
+                <td>any</td>
+                <td>aria-label, aria-labelledby</td>
+            </tr>
+            <tr>
+                <th scope="row">details, optgroup</th>
+                <td>group</td>
+                <td>null</td>
+                <td>role</td>
+            </tr>
+            <tr>
+                <th scope="row">dfn</th>
+                <td>term</td>
+                <td>any</td>
+                <td></td>
+            </tr>
+            <tr>
+                <th scope="row">dialog</th>
+                <td>dialog</td>
+                <td>alertdialog</td>
+            </tr>
+            <tr>
+                <th scope="row">dl</th>
+                <td>null</td>
+                <td>group, list, none, presentation</td>
+                <td></td>
+            </tr>
+            <tr>
+                <th scope="row">dt</th>
+                <td>null</td>
+                <td>listitem</td>
+                <td></td>
+            </tr>
+            <tr>
+                <th scope="row">em</th>
+                <td>emphasis</td>
+                <td>any</td>
+                <td>aria-label, aria-labelledby</td>
+            </tr>
+            <tr>
+                <th scope="row">embed, iframe</th>
+                <td>null</td>
+                <td>application, document, img, none, presentation</td>
+                <td></td>
+            </tr>
+            <tr>
+                <th scope="row">fieldset</th>
+                <td>group</td>
+                <td>none, presentation, radiogroup</td>
+                <td></td>
+            </tr>
+            <tr>
+                <th scope="row">figcaption</th>
+                <td>null</td>
+                <td>group, none, presentation</td>
+                <td>aria-label, aria-labelledby</td>
+            </tr>
+            <!-- <tr>
+                <th scope="row">figure</th>
+                <td>figure</td>
+                <td>
+                    null <abbr title="if and only if">iff</abbr> having any <code>figcaption</code> descendant;
+                    any otherwise
+                </td>
+                <td><code>role</code> <abbr title="if and only if">iff</abbr> having any <code>figcaption</code> descendant</td>
+            </tr> -->
+            <tr>
+                <th scope="row"><code>figure</code>:has(figcaption)</th>
+                <td>figure</td>
+                <td>null</td>
+                <td>role</td>
+            </tr>
+            <tr>
+                <th scope="row"><code>figure</code>:not(:has(figcaption))</th>
+                <td>figure</td>
+                <td>any</td>
+                <td></td>
+            </tr>
+            <!-- <tr>
+                <th scope="row">footer</th>
+                <td><code>contentinfo</code> or <code>generic</code></td>
+                <td>group, presentation, none</td>
+                <td>aria-label, aria-labelledby <abbr title="if and only if">iff</abbr> being a descendant of some elements</td>
+            </tr> -->
+            <tr>
+                <th scope="row">
+                    :is(article, aside, main, nav, section) <code>footer</code>,
+                    <br>
+                    :is([role=article], [role=complementary], [role=main], [role=navigation], [role=region]) <code>footer</code>
+                </th>
+                <td>contentinfo</td>
+                <td>group, presentation, none</td>
+                <td></td>
+            </tr>
+            <tr>
+                <th scope="row">footer <em>NOT</em> above</th>
+                <td>generic</td>
+                <td>group, presentation, none</td>
+                <td>aria-label, aria-labelledby</td>
+            </tr>
+            <tr>
+                <th scope="row">form</th>
+                <td>form</td>
+                <td>none, presentation, search</td>
+                <td></td>
+            </tr>
+            <tr>
+                <th scope="row"><code>h1</code> to <code>h6</code></th>
+                <td>heading</td>
+                <td>none, presentation, tab</td>
+                <td></td>
+            </tr>
+            <!-- <tr>
+                <th scope="row">header</th>
+                <td><code>banner</code> or <code>generic</code></td>
+                <td>group, none, presentation</td>
+                <td>aria-label, aria-labelledby <abbr title="if and only if">iff</abbr> being a descendant of some elements</td>
+            </tr> -->
+            <tr>
+                <th scope="row">
+                    :is(article, aside, main, nav, section) <code>header</code>,
+                    <br>
+                    :is([role=article], [role=complementary], [role=main], [role=navigation], [role=region]) <code>header</code>
+                </th>
+                <td>banner</td>
+                <td>group, none, presentation</td>
+                <td></td>
+            </tr>
+            <tr>
+                <th scope="row">header <em>NOT</em> above</th>
+                <td>generic</td>
+                <td>group, none, presentation</td>
+                <td>aria-label, aria-labelledby</td>
+            </tr>
+            <tr>
+                <th scope="row">hr</th>
+                <td>separator</td>
+                <td>none, presentation</td>
+                <td></td>
+            </tr>
+            <tr>
+                <th scope="row">html</th>
+                <td>document</td>
+                <td>null</td>
+                <td>role, aria-*</td>
+            </tr>
+            <tr>
+                <th scope="row">
+                    <code>img</code>[alt]:not([alt=""]),
+                    <code>img</code>[aria-label],
+                    <code>img</code>[aria-labelledby],
+                    <code>img</code>[title]
+                </th>
+                <td>img</td>
+                <td>button, checkbox, link, menuitem, menuitemcheckbox, menuitemradio, meter, option, progressbar, radio, scrollbar, separator, slider, switch, tab, treeitem</td>
+                <td></td>
+            </tr>
+            <tr>
+                <th scope="row"><code>img</code>[alt=""]:not([aria-label]):not([aria-labelledby]):not([title])</th>
+                <td>none, presentation</td>
+                <td>null</td>
+                <td><code>role</code>, all <code>aria-*</code> except <code>aria-hidden</code></td>
+            </tr>
+            <tr>
+                <th scope="row"><code>img</code>:not([alt]):not([aria-label]):not([aria-labelledby]):not([title])</th>
+                <td>img</td>
+                <td>none, presentation</td>
+                <td>all <code>aria-*</code> except <code>aria-hidden</code></td>
+            </tr>
+            <tr>
+                <th scope="row">input[type=<code>checkbox</code>]:not([aria-pressed])</th>
+                <td>checkbox</td>
+                <td>menuitemcheckbox, option or switch</td>
+                <td>aria-checked</td>
+            </tr>
+            <tr>
+                <th scope="row">input[type=<code>checkbox</code>][aria-pressed]</th>
+                <td>checkbox</td>
+                <td>button</td>
+                <td>aria-checked</td>
+            </tr>
+            <tr>
+                <th scope="row">
+                    input[type=<code>color</code>],
+                    input[type=<code>date</code>],
+                    input[type=<code>datetime-locale</code>],
+                    input[type=<code>file</code>],
+                    input[type=<code>month</code>],
+                    input[type=<code>password</code>],
+                    input[type=<code>time</code>],
+                    input[type=<code>week</code>]
+                </th>
+                <td>null</td>
+                <td>null</td>
+                <td></td>
+            </tr>
+            <tr>
+                <th scope="row">
+                    input[type=<code>email</code>]:not([list]),
+                    input[type=<code>tel</code>]:not([list]),
+                    input[type=<code>url</code>]:not([list]),
+                    textarea
+                </th>
+                <td>textbox</td>
+                <td>null</td>
+                <td></td>
+            </tr>
+            <tr>
+                <th scope="row">input[type=<code>number</code>]</th>
+                <td>spinbutton</td>
+                <td>null</td>
+                <td></td>
+            </tr>
+            <tr>
+                <th scope="row">input[type=<code>radio</code>]</th>
+                <td>radio</td>
+                <td>menuitemradio</td>
+                <td>aria-checked</td>
+            </tr>
+            <tr>
+                <th scope="row">input[type=<code>range</code>]</th>
+                <td>slider</td>
+                <td>null</td>
+                <td>aria-valuemax, aria-valuemin</td>
+            </tr>
+            <tr>
+                <th scope="row"><del title="authors SHOULD consider using a different HTML element which allows the specified role.">input[type=<code>reset</code>]</del></th>
+                <td>button</td>
+                <td>null</td>
+                <td></td>
+            </tr>
+            <tr>
+                <th scope="row">input[type=<code>search</code>]:not([list])</th>
+                <td>searchbox</td>
+                <td>null</td>
+                <td></td>
+            </tr>
+            <tr>
+                <th scope="row"><del title="authors SHOULD consider using a different HTML element which allows the specified role.">input[type=<code>submit</code>]</del></th>
+                <td>button</td>
+                <td>null</td>
+                <td></td>
+            </tr>
+            <tr>
+                <th scope="row">
+                    input[type=<code>text</code>]:not([list]),
+                    input:not([type]):not([list])
+                </th>
+                <td>textbox</td>
+                <td>combobox, searchbox, spinbutton</td>
+                <td></td>
+            </tr>
+            <tr>
+                <th scope="row">input[list]</th>
+                <td>combobox</td>
+                <td>null</td>
+                <td>aria-haspopup</td>
+            </tr>
+            <tr>
+                <th scope="row">ins</th>
+                <td>insertion</td>
+                <td>any</td>
+                <td>aria-lable, aria-labelledby</td>
+            </tr>
+            <tr>
+                <th scope="row">:is(ul, ol, menu) &gt; <code>li</code></th>
+                <td>listitem</td>
+                <td>null</td>
+                <td>role</td>
+            </tr>
+            <tr>
+                <th scope="row">:not(ul, ol, menu, [role=list]) &gt; <code>li</code></th>
+                <td>generic</td>
+                <td>any</td>
+                <td></td>
+            </tr>
+            <tr>
+                <th scope="row">main</th>
+                <td>main</td>
+                <td>null</td>
+                <td></td>
+            </tr>
+            <tr>
+                <th scope="row">math</th>
+                <td>math</td>
+                <td>null</td>
+                <td>role</td>
+            </tr>
+            <tr>
+                <th scope="row">menu, ol, ul</th>
+                <td>list</td>
+                <td>group, listbox, menu, menubar, none, presentation, radiogroup, tablist, toolbar, tree</td>
+            </tr>
+            <tr>
+                <th scope="row">meter</th>
+                <td>meter</td>
+                <td>null</td>
+                <td>aria-valuemax, aria-valuemin</td>
+            </tr>
+            <tr>
+                <th scope="row">nav</th>
+                <td>navigation</td>
+                <td>menu, menubar, none, presentation, tablist</td>
+                <td></td>
+            </tr>
+            <tr>
+                <th scope="row">object</th>
+                <td>null</td>
+                <td>application, document, img</td>
+                <td></td>
+            </tr>
+            <tr>
+                <th scope="row">option</th>
+                <td>option</td>
+                <td>null</td>
+                <td>aria-selected</td>
+            </tr>
+            <tr>
+                <th scope="row">output</th>
+                <td>status</td>
+                <td>any</td>
+                <td></td>
+            </tr>
+            <tr>
+                <th scope="row">p</th>
+                <td>paragraph</td>
+                <td>any</td>
+                <td>aria-label, aria-labelledby</td>
+            </tr>
+            <tr>
+                <th scope="row">picture</th>
+                <td>null</td>
+                <td>null</td>
+                <td>all <code>aria-*</code> except <code>aria-hidden</code></td>
+            </tr>
+            <tr>
+                <th scope="row">progress</th>
+                <td>progressbar</td>
+                <td>null</td>
+                <td>aria-valuemax</td>
+            </tr>
+            <tr>
+                <th scope="row">search</th>
+                <td>search</td>
+                <td>form, group, none, presentation, region</td>
+                <td></td>
+            </tr>
+            <tr>
+                <th scope="row">
+                    <code>section</code>[aria-label],
+                    <code>section</code>[aria-labelledby]
+                </th>
+                <td>region</td>
+                <td rowspan="2">alert, alertdialog, application, banner, complementary, contentinfo, dialog, document, feed, group, log, main, marquee, navigation, none, note, presentation, search, status, tabpanel</td>
+                <td rowspan="2"></td>
+            </tr>
+            <tr>
+                <th scope="row">
+                    <code>section</code>:not([aria-label]):not([aria-labelledby])</th>
+                <td>generic</td>
+            </tr>
+            <tr>
+                <th scope="row">
+                    <code>select</code>:not([multiple]):not([size]),
+                    <code>select</code>:not([multiple])[size=1]
+                </th>
+                <td>combobox</td>
+                <td>menu</td>
+                <td>aria-multiselectable</td>
+            </tr>
+            <tr>
+                <th scope="row">
+                    <code>select</code>[multiple],
+                    <code>select</code>[size]:not([size=1])
+                </th>
+                <td>listbox</td>
+                <td>null</td>
+                <td>aria-multiselectable</td>
+            </tr>
+            <tr>
+                <th scope="row">strong</th>
+                <td>strong</td>
+                <td>any</td>
+                <td>aria-label, aria-labelledby</td>
+            </tr>
+            <tr>
+                <th scope="row">sub</th>
+                <td>subscript</td>
+                <td>null</td>
+                <td>aria-label, aria-labelledby</td>
+            </tr>
+            <tr>
+                <th scope="row">sup</th>
+                <td>superscript</td>
+                <td>any</td>
+                <td>aria-label, aria-labelledby</td>
+            </tr>
+            <tr>
+                <th scope="row">svg</th>
+                <td>graphics-document</td>
+                <td>null</td>
+                <td></td>
+            </tr>
+            <tr>
+                <th scope="row">table</th>
+                <td>table</td>
+                <td>any</td>
+                <td></td>
+            </tr>
+            <tr>
+                <th scope="row">tbody, tfoot, thead</th>
+                <td>rowgroup</td>
+                <td>any</td>
+                <td></td>
+            </tr>
+            <tr>
+                <th scope="row">
+                    table:not[role] <code>td</code>,
+                    table[role=table] <code>td</code>
+                </th>
+                <td>cell</td>
+                <td>null</td>
+                <td></td>
+            </tr>
+            <tr>
+                <th scope="row">
+                    table[role=grid] <code>td</code>,
+                    table[role=treegrid] <code>td</code>
+                </th>
+                <td>gridcell</td>
+                <td>null</td>
+                <td></td>
+            </tr>
+            <tr>
+                <th scope="row">
+                    table[role]:not([role=table]):not([role=grid]):not([role=treegrid]) <code>td</code>
+                </th>
+                <td>null</td>
+                <td>any</td>
+                <td></td>
+            </tr>
+            <tr>
+                <th scope="row">th</th>
+                <td>columnheader, rowheader, cell, gridcell</td>
+                <td>null</td>
+                <td></td>
+            </tr>
+            <tr>
+                <th scope="row">time</th>
+                <td>time</td>
+                <td>any</td>
+                <td>aria-label, aria-labelledby</td>
+            </tr>
+            <tr>
+                <th scope="row">tr</th>
+                <td>row</td>
+                <td>null</td>
+                <td></td>
+            </tr>
+            <tr>
+                <th scope="row"></th>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>
