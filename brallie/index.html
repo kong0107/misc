@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Brallie</title>
+    <script src="https://cdn.jsdelivr.net/npm/kong-util/dist/all.js"></script>
+    <script>kongUtil.use();</script>
+    <style>
+        .monospace {
+            font-family: monospace;
+            font-size: 2rem;
+            line-height: 2;
+        }
+        .monospace div ruby {
+            margin-right: .5em;
+        }
+    </style>
+</head>
+<body>
+    <h1>Brallie</h1>
+    <section>
+        <h2>Latin alphabet</h2>
+        <div id="latin" class="monospace"></div>
+    </section>
+
+    <script>
+        const container = $('#latin');
+        const rpl = createElementFromJsonML(['rp', {}, '(']);
+        const rpr = createElementFromJsonML(['rp', {}, ')']);
+
+        fetchJSON('./map.json').then(data => {
+            data.latin.forEach(charGroup => {
+                const row = ['div', {}];
+                for (let char in charGroup) {
+                    const rt = ['rt', {}, charGroup[char]];
+                    row.push(['ruby', {}, char, rpl, rt, rpr]);
+                }
+                $('#latin').append(createElementFromJsonML(row));
+            });
+        });
+        // for(let i = 0; i < 26; ++i) {
+        //     container.append(createElementFromJsonML(
+        //         ['ruby', {},
+        //             String.fromCharCode(i + 0x41),
+        //             rpl,
+        //             ['rt', {}, String.fromCharCode(i + 0x2801)],
+        //             rpr
+        //         ]
+        //     ));
+        // }
+    </script>
+</body>
+</html>
