@@ -97,7 +97,7 @@
 
 				/// Check error
 				if(_older < _younger) return;
-				
+
 				/// Update location.hash
 				location.hash = '#older=' + _older + '&younger=' + _younger + '&desire=' + _desire;
 
@@ -110,9 +110,9 @@
 						$scope.appliedArticles = ["cc_222__1_2"];
 						_m = 5400; _n = 2520;
 					}
-					else if(_older >= 20 && _younger < 18) {
+					else if(_older >= 18 && _younger < 18) {
 						/// 就本頁面討論範圍內，兒少法§112 Ⅰ因其但書，
-						/// 僅適用於20歲以上對14歲以上、未滿18歲者犯§221的情形。
+						/// 僅適用於18歲以上對14歲以上、未滿18歲者犯§221的情形。
 						addArticle("pcywra_112__1");
 						_m *= 1.5; _n *= 1.5;
 					}
@@ -303,7 +303,6 @@
 				<summary>亦可免除其刑</summary>
 				<p>行為人仍需經歷司法審理之過程，並以法官確信其「有罪」為前提，才可能獲得「免刑」判決。</p>
 			</details>
-			<!--div>可否緩刑？緩起訴？（注意少事法關於緩刑、緩起訴的不同規定）</div-->
 		</section>
 	</section>
 	<section>
@@ -331,9 +330,10 @@
 	</section>
 	<section>
 		<h2>說明</h2>
-		<ol>
+		<ol></ol>
+			<li>自2023年起，滿18歲即為成年；在那之前，是20歲才算成年。本頁面更新後是以18歲為成年。</li>
 			<li>對於未滿十八歲及年滿八十歲以上者的「得」減刑規定，理論上法官可以決定「不予」減刑，而依減刑前的刑度判決。但實際上這種情形非常少見，故本頁面於計算刑度時，概以「能減刑就減刑」的原則套用。</li>
-			<li>十八歲生日當天與七歲以上、未滿十四歲者性交，仍可適用刑法§227-1之規定而獲減刑或免刑。但因為僅對該日有影響，本頁面忽略該情形。</li>
+			<li>十八歲生日當天對七歲以上、未滿十四歲者性交，仍可適用刑法§227-1之規定而獲減刑或免刑。但因為僅對該日有影響，上方互動設計忽略該情形。</li>
 			<li>兩位未滿十六歲之人的合意性交或猥褻行為，將導致雙方互為加害人與被害人，雙方法定代理人互可求償（屬民事關係）。</li>
 			<li>本頁面主要呈現刑事責任，其他關於兒少保護與被害人保護、加害人處遇規定，請參閱《少年事件處理法》、《犯罪被害人保護法》、《性侵害犯罪防治法》等相關法令。</li>
 			<li>本頁面主要呈現雙方無扶養、監督、交易關係的性交行為，故未列出利用權勢、近親通姦、性交易之相關條文。</li>
@@ -350,21 +350,19 @@
 					<th class="hor" scope="row">行為人</th>
 					<td class="hor">未滿14歲</td>
 					<td class="hor">14至18歲</td>
-					<td class="hor">18至20歲</td>
-					<td class="hor">20至80歲</td>
+					<td class="hor">18至80歲</td>
 					<td class="hor">80歲以上</td>
 				</tr>
 				<tr>
 					<th class="hor" scope="row">刑度調整</th>
 					<td class="hor" rowspan="2">刑§18 Ⅰ</td>
 					<td class="hor" rowspan="2">刑§18 Ⅱ</td>
-					<td class="hor" colspan="2"></td>
+					<td class="hor"></td>
 					<td class="hor">刑§18 Ⅲ</td>
 				</tr>
 				<tr>
 					<th class="ver" scope="col">被害人</th>
 					<th class="ver" scope="col">罪條</th>
-					<td class="hor"></td>
 					<td class="hor" colspan="2">兒少法§112 Ⅰ</td>
 				</tr>
 			</thead>
@@ -374,14 +372,13 @@
 					<td class="ver">刑§222 Ⅰ②</td>
 					<td rowspan="3">不罰</td>
 					<td>3.5 ~ 7.5</td>
-					<td colspan="2">7 ~ 15</td>
+					<td>7 ~ 15</td>
 					<td>3.5 ~ 7.5</td>
 				</tr>
 				<tr>
 					<td class="ver">14至18歲</td>
 					<td class="ver" rowspan="2">刑§221 Ⅰ</td>
 					<td rowspan="2">1.5 ~ 5</td>
-					<td rowspan="2">3 ~ 10</td>
 					<td>4.5 ~ 15</td>
 					<td>2.25 ~ 7.5</td>
 				</tr>
