@@ -12,8 +12,6 @@
             padding: .5rem;
         }
         canvas {
-            width: 192px;
-            height: 192px;
             border: 1px solid blue;
             display: block;
         }
@@ -22,8 +20,9 @@
 <body>
     <main></main>
     <script>
-const canvasSize = 192;
-const radius = 90;
+const canvasSize = 512;
+const radius = 200;
+const scale = 0.5;
 const primeList = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71];
 kongUtil.use();
 (async()=> {
@@ -35,15 +34,16 @@ kongUtil.use();
             const container = createElementFromJsonML(
                 ['div', {class: 'container'},
                     ['span', `{${poly}/${prime}}`],
-                    ['canvas', {width: canvasSize, height: canvasSize}]
+                    ['canvas', {width: canvasSize * scale + 'px', height: canvasSize * scale + 'px'}]
                 ]
             );
-            $('main').append(container);
+            $('main').prepend(container);
             console.debug(`{${poly}/${prime}}`);
 
             const canvas = container.lastChild;
             const ctx = canvas.getContext('2d');
-            ctx.lineWidth = 1;
+            ctx.scale(scale, scale);
+            ctx.lineWidth = 1.5;
             // ctx.translate(0.5, 0.5);
 
             let verticeIndex = 0;
@@ -55,9 +55,11 @@ kongUtil.use();
                 const x = radius * Math.sin(angle) + canvasSize / 2;
                 const y = radius * Math.cos(angle) + canvasSize / 2;
                 ctx.lineTo(x, y);
+                // ctx.quadraticCurveTo(canvasSize / 2, canvasSize / 2, x, y);
                 ctx.stroke();
-                await wait(100);
+                await wait(50);
             }
+            await wait(500);
         }
     }
 })();
