@@ -32,10 +32,10 @@ body > footer {
 	color: #888;
 }
 </style>
-<script type="text/javascript">
-// if(location.protocol === 'http:') location.replace('https' + location.href.substring(4));
+<script>
+if (location.protocol === 'http:') location.replace('https' + location.href.substring(4));
 
-function $(s) { return document.querySelector(s); }
+const $ = document.querySelector.bind(document);
 function str_rot13(str) {
 	return str.replace(/[a-z]/gi, function(c) {
 		return String.fromCharCode(c.charCodeAt(0) + (c.toLowerCase() < 'n' ? 13 : -13));
@@ -57,21 +57,21 @@ let auto = false;
 let parse_str_rot13 = false;
 
 document.addEventListener('DOMContentLoaded', () => {
-	if(s.length > 1) {
+	if (s.length > 1) {
 		const pairs = s.substr(1).split('&');
-		for(let i = 0; i < pairs.length; ++i) {
+		for (let i = 0; i < pairs.length; ++i) {
 			const pair = pairs[i].split('=');
-			if(!pair[0].length) continue;
+			if (! pair[0].length) continue;
 			const p = pair[0];
 			const v = pair[1];
-			if(!v) continue;
-			switch(p) {
+			if (! v) continue;
+			switch (p) {
 				case 'auto': {
-					if(v != '0' && v != 'false') auto = true;
+					if (v != '0' && v != 'false') auto = true;
 					break;
 				}
 				case 'url': {
-					if(v.length < 10) break;
+					if (v.length < 10) break;
 					hasUrl = true;
 					/// 網址含有非 ASCII 字元時，遇到如 Facebook 的轉址連結，還原時會變亂碼，故不宜一概用 unescape 。
 					url = v.replace(
@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
 				case 'blood':
 				case 'trypo':
 				case 'restricted': {
-					if(wm_zh.length) {
+					if (wm_zh.length) {
 						wm_zh += '、';
 						wm_en += ' and';
 					}
@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
 					break;
 				}
 				case 'warning': {
-					if(wm_zh.length) {
+					if (wm_zh.length) {
 						wm_zh += '、';
 						wm_en += ' and other inappropriate stuff';
 					}
@@ -110,19 +110,18 @@ document.addEventListener('DOMContentLoaded', () => {
 			}
 		}
 	}
-	if(hasUrl) {
-		if(wm_zh.length) {
+	if (hasUrl) {
+		if (wm_zh.length) {
 			$('#warning-zh').textContent = wm_zh;
 			$('#warning-en').textContent = wm_en;
 
-			if(parse_str_rot13) url = str_rot13(url);
-			if(auto) location.replace(url);
+			if (parse_str_rot13) url = str_rot13(url);
+			if (auto) location.replace(url);
 			const a = $('#url');
 			a.href = url;
 			a.textContent = url;
-			$('#confirm').addEventListener('submit', () => {
+			$('button').addEventListener('click', () => {
 				location.replace(url);
-				return false;
 			});
 			$('#input').style.display = 'none';
 		}
@@ -131,11 +130,11 @@ document.addEventListener('DOMContentLoaded', () => {
 		$('#confirm').style.display = 'none';
 		$('#input').addEventListener('submit', e => {
 			const es = e.target.elements;
-			if(es.url.value.length < 10) {
+			if (es.url.value.length < 10) {
 				alert('網址太短 (The URL is too short.)');
 				return false;
 			}
-			if(es.encode.checked)
+			if (es.encode.checked)
 				es.url.value = str_rot13(es.url.value);
 		});
 	}
@@ -150,7 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	<br>
 	<a id="url"></a>
 	<br>
-	<input type="submit" value="前往 (Go Forward)">
+	<button type="button">前往 (Go Forward)</button>
 	<hr>
 	<a id="create" href="redirect.html">建立警告頁 (Create a warning page)</a>
 </form>
